@@ -7,7 +7,7 @@ output "api_id" {
 
 output "api_endpoint" {
   description = "API Gateway HTTP API endpoint URL (needed for VITE_API_URL)"
-  value       = "https://${aws_apigatewayv2_api.password_manager.api_endpoint}/${aws_apigatewayv2_stage.default.name}"
+  value       = "${aws_apigatewayv2_api.password_manager.api_endpoint}/${aws_apigatewayv2_stage.default.name}"
 }
 
 output "api_endpoint_protocol" {
@@ -23,4 +23,9 @@ output "stage_name" {
 output "authorizer_id" {
   description = "JWT Authorizer ID"
   value       = aws_apigatewayv2_authorizer.cognito.id
+}
+
+output "execution_arn" {
+  description = "API Gateway execution ARN for Lambda permissions"
+  value       = aws_apigatewayv2_api.password_manager.execution_arn
 }

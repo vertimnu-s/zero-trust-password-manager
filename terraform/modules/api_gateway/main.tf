@@ -1,6 +1,6 @@
 # API Gateway Module - HTTP API with JWT Authorizer
 
-# Get current AWS account ID
+# Get current AWS account ID for Lambda URN construction
 data "aws_caller_identity" "current" {}
 
 # ========== CREATE HTTP API ==========
@@ -28,7 +28,7 @@ resource "aws_apigatewayv2_api" "password_manager" {
 resource "aws_apigatewayv2_authorizer" "cognito" {
   api_id           = aws_apigatewayv2_api.password_manager.id
   authorizer_type  = "JWT"
-  identity_source  = "$request.header.Authorization"
+  identity_sources = ["$request.header.Authorization"]
   name             = "cognito-authorizer"
   
   jwt_configuration {
@@ -82,35 +82,35 @@ resource "aws_apigatewayv2_route" "delete_password" {
 # Each integration connects a route to a Lambda function
 
 resource "aws_apigatewayv2_integration" "create_password" {
-  api_id           = aws_apigatewayv2_api.password_manager.id
-  integration_type = "AWS_PROXY"
-  integration_method = "POST"
+  api_id             = aws_apigatewayv2_api.password_manager.id
+  integration_type   = "AWS_PROXY"
+  integration_subtype = "lambda"
   payload_format_version = "2.0"
-  target_arn       = var.create_lambda_function_arn
+  integration_uri    = "${var.create_lambda_function_arn}:$LATEST"
 }
 
 resource "aws_apigatewayv2_integration" "read_passwords" {
-  api_id           = aws_apigatewayv2_api.password_manager.id
-  integration_type = "AWS_PROXY"
-  integration_method = "POST"
+  api_id             = aws_apigatewayv2_api.password_manager.id
+  integration_type   = "AWS_PROXY"
+  integration_subtype = "lambda"
   payload_format_version = "2.0"
-  target_arn       = var.read_lambda_function_arn
+  integration_uri    = "${var.read_lambda_function_arn}:$LATEST"
 }
 
 resource "aws_apigatewayv2_integration" "update_password" {
-  api_id           = aws_apigatewayv2_api.password_manager.id
-  integration_type = "AWS_PROXY"
-  integration_method = "POST"
+  api_id             = aws_apigatewayv2_api.password_manager.id
+  integration_type   = "AWS_PROXY"
+  integration_subtype = "lambda"
   payload_format_version = "2.0"
-  target_arn       = var.update_lambda_function_arn
+  integration_uri    = "${var.update_lambda_function_arn}:$LATEST"
 }
 
 resource "aws_apigatewayv2_integration" "delete_password" {
-  api_id           = aws_apigatewayv2_api.password_manager.id
-  integration_type = "AWS_PROXY"
-  integration_method = "POST"
+  api_id             = aws_apigatewayv2_api.password_manager.id
+  integration_type   = "AWS_PROXY"
+  integration_subtype = "lambda"
   payload_format_version = "2.0"
-  target_arn       = var.delete_lambda_function_arn
+  integration_uri    = "${var.delete_lambda_function_arn}:$LATEST"
 }
 
 # ========== STAGE AND DEPLOYMENT ==========
@@ -125,10 +125,6 @@ resource "aws_apigatewayv2_stage" "default" {
   # Default route settings
   default_route_settings {
     detailed_metrics_enabled = true
-    throttle_settings {
-      burst_limit = 5000
-      rate_limit  = 2000
-    }
   }
 
   # Access logging (optional - uncomment to enable)
@@ -164,4 +160,39 @@ resource "aws_apigatewayv2_stage" "default" {
 resource "aws_apigatewayv2_route" "cors_options" {
   api_id    = aws_apigatewayv2_api.password_manager.id
   route_key = "$default"
+}
+
+# ========== LAMBDA PERMISSIONS FOR API GATEWAY INVOCATION ==========
+# These allow API Gateway to invoke the Lambda functions
+
+resource "aws_lambda_permission" "create_apigw" {
+  statement_id   = "AllowAPIGatewayInvoke"
+  action         = "lambda:InvokeFunction"
+  function_name  = var.create_lambda_function_name
+  principal      = "apigateway.amazonaws.com"
+  source_arn     = "${aws_apigatewayv2_api.password_manager.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "read_apigw" {
+  statement_id   = "AllowAPIGatewayInvoke"
+  action         = "lambda:InvokeFunction"
+  function_name  = var.read_lambda_function_name
+  principal      = "apigateway.amazonaws.com"
+  source_arn     = "${aws_apigatewayv2_api.password_manager.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "update_apigw" {
+  statement_id   = "AllowAPIGatewayInvoke"
+  action         = "lambda:InvokeFunction"
+  function_name  = var.update_lambda_function_name
+  principal      = "apigateway.amazonaws.com"
+  source_arn     = "${aws_apigatewayv2_api.password_manager.execution_arn}/*/*"
+}
+
+resource "aws_lambda_permission" "delete_apigw" {
+  statement_id   = "AllowAPIGatewayInvoke"
+  action         = "lambda:InvokeFunction"
+  function_name  = var.delete_lambda_function_name
+  principal      = "apigateway.amazonaws.com"
+  source_arn     = "${aws_apigatewayv2_api.password_manager.execution_arn}/*/*"
 }

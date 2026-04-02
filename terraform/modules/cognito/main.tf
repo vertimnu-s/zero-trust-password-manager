@@ -61,9 +61,6 @@ resource "aws_cognito_user_pool" "main" {
     mutable    = true
   }
 
-  # AUTO-VERIFY EMAIL - When created via admin API (optional)
-  auto_verified_attributes = ["email"]
-
   # ENABLE SIGN-UP - Self-registration is enabled
   user_pool_add_ons {
     advanced_security_mode = "ENFORCED"  # Detects suspicious signin activity
@@ -72,6 +69,11 @@ resource "aws_cognito_user_pool" "main" {
   # TAGS
   tags = {
     Name = "${var.project_name}-user-pool"
+  }
+
+  device_configuration {
+    challenge_required_on_new_device      = var.mfa_enabled
+    device_only_remembered_on_user_prompt = false
   }
 }
 
@@ -108,25 +110,10 @@ resource "aws_cognito_user_pool_client" "frontend" {
   # Prevent users from using the same password twice (if implemented)
   prevent_user_existence_errors = "ENABLED"
 
-  # Enable email as username for sign-in
-  username_attributes = ["email"]
-
   # Passkeys support (WebAuthn)
   supported_identity_providers = ["COGNITO"]
 
   # Allow custom authentication flow if needed
   allowed_oauth_flows = []
   allowed_oauth_scopes = []
-}
-
-# Optional: Create a resource server if you want OAuth scopes (for future use)
-# This isn't strictly needed for your current setup but good to have for scalability
-
-# Optional: Configure advanced security (device tracking, etc.)
-resource "aws_cognito_user_pool_device_configuration" "main" {
-  user_pool_id = aws_cognito_user_pool.main.id
-
-  # Remember device for 30 days (reduces MFA prompts)
-  challenge_required_on_new_device = var.mfa_enabled  # If MFA enabled, challenge on new device
-  device_only_remembered_on_user_prompt = false
 }

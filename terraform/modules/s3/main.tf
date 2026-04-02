@@ -69,23 +69,19 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
   rule {
-    id     = "archive-old-logs"
+    id     = "delete-old-logs"
     status = "Enabled"
 
-    # Move to Glacier after 30 days (reduces cost from $0.023 to $0.0036 per GB/month)
-    transitions {
-      days          = var.archive_to_glacier_days
-      storage_class = "GLACIER"
-    }
+    filter {}
 
-    # Delete after 90 days (optional - change if you need longer retention)
+    # Delete after retention period (optimized for free tier)
     expiration {
       days = var.audit_logs_retention_days
     }
 
-    # Delete old versions after 30 days
+    # Delete old versions after 7 days
     noncurrent_version_expiration {
-      noncurrent_days = 30
+      noncurrent_days = 7
     }
   }
 }

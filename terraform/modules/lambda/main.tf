@@ -3,11 +3,6 @@
 # Get current AWS account ID for Lambda ARN construction
 data "aws_caller_identity" "current" {}
 
-# Get available Lambda runtimes from current region
-data "aws_lambda_runtime" "nodejs_latest" {
-  runtime = "nodejs20.x"
-}
-
 # ========== ARCHIVE/ZIP LAMBDA SOURCE CODE ==========
 # Each lambda function needs to be packaged as a ZIP file
 
@@ -15,33 +10,24 @@ data "archive_file" "create_password_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../../lambda-functions/create-password"
   output_path = "/tmp/create-password.zip"
-
-  # Recreate ZIP if source files change
-  source_hash = filemd5("${path.module}/../../lambda-functions/create-password/index.js")
 }
 
 data "archive_file" "read_passwords_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../../lambda-functions/read-passwords"
   output_path = "/tmp/read-passwords.zip"
-
-  source_hash = filemd5("${path.module}/../../lambda-functions/read-passwords/index.js")
 }
 
 data "archive_file" "update_password_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../../lambda-functions/update-password"
   output_path = "/tmp/update-password.zip"
-
-  source_hash = filemd5("${path.module}/../../lambda-functions/update-password/index.js")
 }
 
 data "archive_file" "delete_password_zip" {
   type        = "zip"
   source_dir  = "${path.module}/../../lambda-functions/delete-password"
   output_path = "/tmp/delete-password.zip"
-
-  source_hash = filemd5("${path.module}/../../lambda-functions/delete-password/index.js")
 }
 
 # ========== 1. CREATE PASSWORD LAMBDA ==========
@@ -179,37 +165,4 @@ resource "aws_lambda_function" "delete_password" {
   }
 }
 
-# ========== LAMBDA PERMISSIONS FOR API GATEWAY INVOCATION ==========
-# These allow API Gateway to invoke the Lambda functions
-
-resource "aws_lambda_permission" "create_apigw" {
-  statement_id   = "AllowAPIGatewayInvoke"
-  action         = "lambda:InvokeFunction"
-  function_name  = aws_lambda_function.create_password.function_name
-  principal      = "apigateway.amazonaws.com"
-  source_arn     = "arn:aws:execute-api:*:*:*/*/*"
-}
-
-resource "aws_lambda_permission" "read_apigw" {
-  statement_id   = "AllowAPIGatewayInvoke"
-  action         = "lambda:InvokeFunction"
-  function_name  = aws_lambda_function.read_passwords.function_name
-  principal      = "apigateway.amazonaws.com"
-  source_arn     = "arn:aws:execute-api:*:*:*/*/*"
-}
-
-resource "aws_lambda_permission" "update_apigw" {
-  statement_id   = "AllowAPIGatewayInvoke"
-  action         = "lambda:InvokeFunction"
-  function_name  = aws_lambda_function.update_password.function_name
-  principal      = "apigateway.amazonaws.com"
-  source_arn     = "arn:aws:execute-api:*:*:*/*/*"
-}
-
-resource "aws_lambda_permission" "delete_apigw" {
-  statement_id   = "AllowAPIGatewayInvoke"
-  action         = "lambda:InvokeFunction"
-  function_name  = aws_lambda_function.delete_password.function_name
-  principal      = "apigateway.amazonaws.com"
-  source_arn     = "arn:aws:execute-api:*:*:*/*/*"
-}
+# Lambda permissions are now created in the API Gateway module to avoid circular dependencies

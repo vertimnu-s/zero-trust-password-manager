@@ -92,20 +92,20 @@ module "api_gateway" {
   frontend_origin             = var.frontend_origin
   
   # Pass Lambda function information for integration
-  create_lambda_function_arn  = module.lambda.create_password_function_arn
-  read_lambda_function_arn    = module.lambda.read_passwords_function_arn
-  update_lambda_function_arn  = module.lambda.update_password_function_arn
-  delete_lambda_function_arn  = module.lambda.delete_password_function_arn
+  create_lambda_function_arn     = module.lambda.create_password_function_arn
+  read_lambda_function_arn       = module.lambda.read_passwords_function_arn
+  update_lambda_function_arn     = module.lambda.update_password_function_arn
+  delete_lambda_function_arn     = module.lambda.delete_password_function_arn
+  
+  # Pass Lambda function names for permissions
+  create_lambda_function_name    = module.lambda.create_password_function_name
+  read_lambda_function_name      = module.lambda.read_passwords_function_name
+  update_lambda_function_name    = module.lambda.update_password_function_name
+  delete_lambda_function_name    = module.lambda.delete_password_function_name
   
   # Pass Cognito User Pool for JWT authorizer
   cognito_user_pool_id        = module.cognito.user_pool_id
   cognito_user_pool_arn       = module.cognito.user_pool_arn
-  
-  # Pass Lambda invoke permissions
-  lambda_create_invoke_permission = module.lambda.create_password_invoke_permission
-  lambda_read_invoke_permission   = module.lambda.read_passwords_invoke_permission
-  lambda_update_invoke_permission = module.lambda.update_password_invoke_permission
-  lambda_delete_invoke_permission = module.lambda.delete_password_invoke_permission
   
   # Depends on Lambda and Cognito being ready
   depends_on = [module.lambda, module.cognito]
