@@ -70,3 +70,8 @@ variable "cognito_user_pool_arn" {
   description = "Cognito User Pool ARN"
   type        = string
 }
+
+variable "cognito_client_id" {
+  description = "Cognito App Client ID for JWT audience"
+  type        = string
+}

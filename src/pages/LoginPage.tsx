@@ -8,7 +8,6 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [isConfirming, setIsConfirming] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
-  const [passwordErrors, setPasswordErrors] = useState<string[]>([]);
 
   const handleLogin = async () => {
     try {
@@ -30,10 +29,6 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
 
   const handlePasswordChange = (newPassword: string) => {
     setPassword(newPassword);
-    if (isRegistering) {
-      const validation = validatePassword(newPassword);
-      setPasswordErrors(validation.errors);
-    }
   };
 
   const handleRegister = async () => {

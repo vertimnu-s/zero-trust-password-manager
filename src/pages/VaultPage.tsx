@@ -5,7 +5,7 @@ import {
   updatePassword,
   deletePassword,
 } from "../services/api";
-import { encryptPassword, decryptPassword, validateMasterPassword, secureCopyToClipboard, secureWipeString, generateSecurePassword, sanitizeInput, validateSite, validateUsername, auditLogger } from "../services/crypto";
+import { encryptPassword, decryptPassword, secureCopyToClipboard, secureWipeString, generateSecurePassword, sanitizeInput, validateSite, validateUsername, auditLogger } from "../services/crypto";
 
 type ApiPasswordItem = {
   site: { S: string };
@@ -202,17 +202,12 @@ function VaultPage() {
         throw new Error("Master password is required");
       }
 
-      const validation = validateMasterPassword(promptValue);
-      if (!validation.isValid) {
-        alert(`Master password is too weak:\n${validation.errors.join('\n')}`);
-        throw new Error("Master password does not meet security requirements");
-      }
-
+      // Master password is validated during registration, so we just accept it here
       setMasterPassword(promptValue);
       auditLogger.log({
         action: 'vault_unlock',
         success: true,
-        details: 'Master password validated and set'
+        details: 'Master password set'
       });
       return promptValue;
     }

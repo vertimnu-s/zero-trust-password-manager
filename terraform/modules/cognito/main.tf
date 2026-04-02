@@ -40,26 +40,28 @@ resource "aws_cognito_user_pool" "main" {
   }
 
   # USER ATTRIBUTE CONFIGURATION
-  schema {
-    name       = "email"
-    attribute_data_type = "String"
-    mutable    = true
-    required   = true
-  }
+  # NOTE: Schema attributes cannot be modified after User Pool creation
+  # Uncomment these only for fresh deployments (new User Pool)
+  # schema {
+  #   name       = "email"
+  #   attribute_data_type = "String"
+  #   mutable    = true
+  #   required   = true
+  # }
 
-  schema {
-    name       = "preferred_username"
-    attribute_data_type = "String"
-    mutable    = true
-    required   = true
-  }
+  # schema {
+  #   name       = "preferred_username"
+  #   attribute_data_type = "String"
+  #   mutable    = true
+  #   required   = true
+  # }
 
   # USER ATTRIBUTE PERMISSIONS - Allow users to update email
-  schema {
-    name       = "name"
-    attribute_data_type = "String"
-    mutable    = true
-  }
+  # schema {
+  #   name       = "name"
+  #   attribute_data_type = "String"
+  #   mutable    = true
+  # }
 
   # ENABLE SIGN-UP - Self-registration is enabled
   user_pool_add_ons {
@@ -74,6 +76,11 @@ resource "aws_cognito_user_pool" "main" {
   device_configuration {
     challenge_required_on_new_device      = var.mfa_enabled
     device_only_remembered_on_user_prompt = false
+  }
+
+  # Ignore schema changes - schema cannot be modified after User Pool creation
+  lifecycle {
+    ignore_changes = [schema]
   }
 }
 

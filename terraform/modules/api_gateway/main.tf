@@ -32,12 +32,9 @@ resource "aws_apigatewayv2_authorizer" "cognito" {
   name             = "cognito-authorizer"
   
   jwt_configuration {
-    audience       = []  # Leave empty to accept any audience
-    issuer         = "https://cognito-idp.${data.aws_caller_identity.current.account_id}.amazonaws.com/${var.cognito_user_pool_id}"
+    audience       = [var.cognito_client_id]
+    issuer         = "https://cognito-idp.eu-north-1.amazonaws.com/${var.cognito_user_pool_id}"
   }
-
-  # Parser configuration
-  enable_simple_responses = true
 }
 
 # ========== CREATE ROUTES FOR LAMBDA FUNCTIONS ==========
@@ -84,33 +81,29 @@ resource "aws_apigatewayv2_route" "delete_password" {
 resource "aws_apigatewayv2_integration" "create_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
   integration_type   = "AWS_PROXY"
-  integration_subtype = "lambda"
   payload_format_version = "2.0"
-  integration_uri    = "${var.create_lambda_function_arn}:$LATEST"
+  integration_uri    = var.create_lambda_function_arn
 }
 
 resource "aws_apigatewayv2_integration" "read_passwords" {
   api_id             = aws_apigatewayv2_api.password_manager.id
   integration_type   = "AWS_PROXY"
-  integration_subtype = "lambda"
   payload_format_version = "2.0"
-  integration_uri    = "${var.read_lambda_function_arn}:$LATEST"
+  integration_uri    = var.read_lambda_function_arn
 }
 
 resource "aws_apigatewayv2_integration" "update_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
   integration_type   = "AWS_PROXY"
-  integration_subtype = "lambda"
   payload_format_version = "2.0"
-  integration_uri    = "${var.update_lambda_function_arn}:$LATEST"
+  integration_uri    = var.update_lambda_function_arn
 }
 
 resource "aws_apigatewayv2_integration" "delete_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
   integration_type   = "AWS_PROXY"
-  integration_subtype = "lambda"
   payload_format_version = "2.0"
-  integration_uri    = "${var.delete_lambda_function_arn}:$LATEST"
+  integration_uri    = var.delete_lambda_function_arn
 }
 
 # ========== STAGE AND DEPLOYMENT ==========
@@ -152,14 +145,6 @@ resource "aws_apigatewayv2_stage" "default" {
     aws_apigatewayv2_route.update_password,
     aws_apigatewayv2_route.delete_password
   ]
-}
-
-# ========== OPTIONAL: OPTIONS PREFIX HANDLER FOR CORS ==========
-# API Gateway HTTP API now handles CORS natively, but this ensures OPTIONS works
-
-resource "aws_apigatewayv2_route" "cors_options" {
-  api_id    = aws_apigatewayv2_api.password_manager.id
-  route_key = "$default"
 }
 
 # ========== LAMBDA PERMISSIONS FOR API GATEWAY INVOCATION ==========
