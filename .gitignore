@@ -1,4 +1,6 @@
-# Logs
+# ============================================
+# BUILD & FRONTEND FILES
+# ============================================
 logs
 *.log
 npm-debug.log*
@@ -6,21 +8,108 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
+node_modules/
+dist/
+dist-ssr/
 *.local
 
-# Editor directories and files
+# ============================================
+# EDITOR & IDE
+# ============================================
 .vscode/*
 !.vscode/extensions.json
-.idea
+.idea/
 .DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.sublime-project
+*.sublime-workspace
 
+# ============================================
+# ENVIRONMENT & SECRETS (NOT .env.example!)
+# ============================================
 .env
+.env.local
+.env.*.local
+.env.production.local
+.aws/credentials
+.aws/config
+
+# ============================================
+# TERRAFORM - CRITICAL: CONTAINS AWS SECRETS
+# ============================================
+
+# Terraform directories (contains provider cache)
+terraform/.terraform/
+terraform/.terraform.lock.hcl
+
+# Terraform state files (CONTAINS AWS CREDENTIALS - NEVER COMMIT!)
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/.tfstate.lock.info
+
+# Terraform plan files
+terraform/tfplan
+terraform/tfplan.*
+terraform/*.tfplan
+
+# Terraform variable overrides
+terraform/*.auto.tfvars
+terraform/*.auto.tfvars.json
+
+# Crash logs
+terraform/crash.log
+terraform/crash.*.log
+
+# ============================================
+# LAMBDA - COMPILED & ARCHIVED
+# ============================================
+terraform/lambda-functions/**/*.zip
+terraform/lambda-functions/**/*.js.map
+terraform/lambda-functions/**/node_modules/
+terraform/lambda-functions/**/.DS_Store
+/tmp/
+*.tmp
+
+# ============================================
+# AWS & DEPLOYMENT
+# ============================================
+.aws/
+.awsrc
+aws-vault
+aws-cli-credentials
+*.pem
+*.key
+*.pub
+
+# ============================================
+# OS FILES
+# ============================================
+Thumbs.db
+.AppleDouble
+.LSOverride
+*~
+.~*
+
+# ============================================
+# LOCAL DOCUMENTATION (NOT in repo)
+# ============================================
+# Keep these files locally only - not pushed to GitHub:
+AWS_FREE_TIER_OPTIMIZATION.md
+COST_SUMMARY.md
+FREE_TIER_OPTIMIZATION_COMPLETE.md
+PRE_DEPLOYMENT_CHECKLIST.md
+QUICK_START_SUMMARY.md
+TERRAFORM_IMPLEMENTATION.md
+IMPLEMENTATION_COMPLETE.md
+
+# ============================================
+# KEEP THESE IN REPO (documentation & templates)
+# ============================================
+# .env.example       ← Keep this (frontend env template)
+# README.md          ← Keep this (main project documentation)
+# terraform/README.md ← Keep this (Terraform infrastructure documentation)
+# terraform/README.md  ← Keep this (deployment guide)
