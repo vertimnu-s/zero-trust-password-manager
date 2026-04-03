@@ -202,3 +202,25 @@ resource "aws_iam_role_policy" "delete_password_policy" {
 #   role       = aws_iam_role.create_password_role.name
 #   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
 # }
+
+# ========== AWS MANAGED POLICIES FOR LAMBDA BASIC EXECUTION ==========
+
+resource "aws_iam_role_policy_attachment" "create_lambda_basic_execution" {
+  role       = aws_iam_role.create_password_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "read_lambda_basic_execution" {
+  role       = aws_iam_role.read_passwords_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "update_lambda_basic_execution" {
+  role       = aws_iam_role.update_password_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy_attachment" "delete_lambda_basic_execution" {
+  role       = aws_iam_role.delete_password_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}

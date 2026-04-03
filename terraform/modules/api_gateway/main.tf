@@ -11,11 +11,11 @@ resource "aws_apigatewayv2_api" "password_manager" {
   # CORS Configuration - handled natively by HTTP API
   cors_configuration {
     allow_origins = [var.frontend_origin]
-    allow_methods = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+    allow_methods = ["*"]
     allow_headers = ["Content-Type", "Authorization"]
-    expose_headers = ["Content-Type"]
-    max_age      = 86400  # 24 hours
-    allow_credentials = false  # Set to true if using cookies
+    expose_headers = ["*"]
+    max_age      = 300
+    allow_credentials = false
   }
 
   tags = {
@@ -118,6 +118,8 @@ resource "aws_apigatewayv2_stage" "default" {
   # Default route settings
   default_route_settings {
     detailed_metrics_enabled = true
+    throttling_burst_limit   = 5000
+    throttling_rate_limit    = 10000
   }
 
   # Access logging (optional - uncomment to enable)

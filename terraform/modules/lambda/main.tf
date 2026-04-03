@@ -53,7 +53,7 @@ resource "aws_lambda_function" "create_password" {
   environment {
     variables = {
       PASSWORD_TABLE  = var.dynamodb_table_name
-      ALLOWED_ORIGIN  = "localhost:5173"  # Will be overridden by API Gateway
+      ALLOWED_ORIGIN  = "http://localhost:5173"
       AUDIT_LOG_BUCKET = var.s3_audit_logs_bucket_name
     }
   }
@@ -90,7 +90,7 @@ resource "aws_lambda_function" "read_passwords" {
   environment {
     variables = {
       PASSWORD_TABLE  = var.dynamodb_table_name
-      ALLOWED_ORIGIN  = "localhost:5173"
+      ALLOWED_ORIGIN  = "http://localhost:5173"
       AUDIT_LOG_BUCKET = var.s3_audit_logs_bucket_name
     }
   }
@@ -122,7 +122,7 @@ resource "aws_lambda_function" "update_password" {
   environment {
     variables = {
       PASSWORD_TABLE  = var.dynamodb_table_name
-      ALLOWED_ORIGIN  = "localhost:5173"
+      ALLOWED_ORIGIN  = "http://localhost:5173"
       AUDIT_LOG_BUCKET = var.s3_audit_logs_bucket_name
     }
   }
@@ -154,7 +154,7 @@ resource "aws_lambda_function" "delete_password" {
   environment {
     variables = {
       PASSWORD_TABLE  = var.dynamodb_table_name
-      ALLOWED_ORIGIN  = "localhost:5173"
+      ALLOWED_ORIGIN  = "http://localhost:5173"
       AUDIT_LOG_BUCKET = var.s3_audit_logs_bucket_name
     }
   }

@@ -16,6 +16,10 @@ async function handleResponse(response: Response) {
 
 function getAuthHeaders() {
   const token = localStorage.getItem("idToken");
+  console.log("🔐 Auth Token Present:", !!token);
+  if (token) {
+    console.log("🔐 Token Preview:", token.substring(0, 50) + "...");
+  }
   return {
     "Content-Type": "application/json",
     Authorization: `Bearer ${token}`,
