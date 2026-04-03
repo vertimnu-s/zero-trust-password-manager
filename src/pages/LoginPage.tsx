@@ -58,8 +58,19 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
       addToast("Registration successful! Check your email for the verification code.", "success");
       setView("confirm");
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      addToast(`Registration failed: ${message}`, "error");
+      const code = (error as { code?: string })?.code;
+      if (code === "UsernameExistsException") {
+        try {
+          await resendConfirmationCode(email.trim());
+          addToast("Account already exists but is unconfirmed. A new verification code has been sent.", "info");
+          setView("confirm");
+        } catch {
+          addToast("Account already exists. Try logging in instead.", "error");
+        }
+      } else {
+        const message = error instanceof Error ? error.message : String(error);
+        addToast(`Registration failed: ${message}`, "error");
+      }
     } finally {
       setLoading(false);
     }
