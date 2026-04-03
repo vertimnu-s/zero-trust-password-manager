@@ -72,8 +72,7 @@ export async function decryptPassword(
     );
 
     return new TextDecoder().decode(decrypted);
-  } catch (err) {
-    console.error("Crypto decrypt error", err);
+  } catch {
     throw new Error(
       "Decryption failed (wrong master password / context mismatch / corrupted ciphertext)."
     );
@@ -130,13 +129,12 @@ export async function secureCopyToClipboard(text: string, autoClearMs: number = 
         if (currentClipboard === text) {
           await navigator.clipboard.writeText("");
         }
-      } catch (error) {
-        console.warn("Could not auto-clear clipboard", error);
+      } catch {
+        // Clipboard may not be accessible
       }
     }, autoClearMs);
 
-  } catch (error) {
-    console.error("Clipboard copy failed", error);
+  } catch {
     throw new Error("Failed to copy to clipboard securely");
   }
 }
@@ -151,6 +149,12 @@ export function secureWipeString(str: string): void {
   }
 }
 
+function secureRandomIndex(max: number): number {
+  const array = new Uint32Array(1);
+  window.crypto.getRandomValues(array);
+  return array[0] % max;
+}
+
 export function generateSecurePassword(options: {
   length: number;
   includeLower: boolean;
@@ -160,14 +164,13 @@ export function generateSecurePassword(options: {
   avoidAmbiguous?: boolean;
 }): string {
   const charSets = {
-    lower: options.includeLower ? "abcdefghijkmnopqrstuvwxyz" : "", // Removed l to avoid confusion
-    upper: options.includeUpper ? "ABCDEFGHJKLMNPQRSTUVWXYZ" : "", // Removed I,O to avoid confusion
-    numbers: options.includeNumbers ? "23456789" : "", // Avoided 0,1 to reduce confusion
+    lower: options.includeLower ? "abcdefghijkmnopqrstuvwxyz" : "",
+    upper: options.includeUpper ? "ABCDEFGHJKLMNPQRSTUVWXYZ" : "",
+    numbers: options.includeNumbers ? "23456789" : "",
     symbols: options.includeSymbols ? "!@#$%^&*()_+-=[]{}|;:,.<>?" : "",
   };
 
   if (options.avoidAmbiguous) {
-    // Further reduce ambiguous characters
     charSets.lower = charSets.lower.replace(/[l]/g, "");
     charSets.upper = charSets.upper.replace(/[I]/g, "");
     charSets.numbers = charSets.numbers.replace(/[0]/g, "");
@@ -178,27 +181,22 @@ export function generateSecurePassword(options: {
     throw new Error("At least one character type must be selected");
   }
 
-  // Ensure at least one character from each selected set for better security
   const requiredChars: string[] = [];
   Object.entries(charSets).forEach(([key, chars]) => {
     if (chars && options[key as keyof typeof options]) {
-      const randomIndex = Math.floor(Math.random() * chars.length);
-      requiredChars.push(chars[randomIndex]);
+      requiredChars.push(chars[secureRandomIndex(chars.length)]);
     }
   });
 
-  // Fill the rest with random characters
   const remainingLength = options.length - requiredChars.length;
   const resultChars = [...requiredChars];
 
   for (let i = 0; i < remainingLength; i++) {
-    const randomIndex = Math.floor(Math.random() * allChars.length);
-    resultChars.push(allChars[randomIndex]);
+    resultChars.push(allChars[secureRandomIndex(allChars.length)]);
   }
 
-  // Shuffle the array for better randomness
   for (let i = resultChars.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = secureRandomIndex(i + 1);
     [resultChars[i], resultChars[j]] = [resultChars[j], resultChars[i]];
   }
 

@@ -36,7 +36,7 @@ resource "aws_lambda_function" "create_password" {
   function_name = "${var.project_name}-create-password-${var.environment}"
   role          = var.create_lambda_role_arn
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   
   timeout     = var.timeout_seconds
   memory_size = var.memory_mb
@@ -49,7 +49,7 @@ resource "aws_lambda_function" "create_password" {
   environment {
     variables = {
       PASSWORD_TABLE  = var.dynamodb_table_name
-      ALLOWED_ORIGIN  = "http://localhost:5173"
+      ALLOWED_ORIGIN  = var.frontend_origin
       AUDIT_LOG_BUCKET = var.s3_audit_logs_bucket_name
     }
   }
@@ -68,7 +68,7 @@ resource "aws_lambda_function" "read_passwords" {
   function_name = "${var.project_name}-read-passwords-${var.environment}"
   role          = var.read_lambda_role_arn
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   
   timeout     = var.timeout_seconds
   memory_size = var.memory_mb
@@ -81,7 +81,7 @@ resource "aws_lambda_function" "read_passwords" {
   environment {
     variables = {
       PASSWORD_TABLE  = var.dynamodb_table_name
-      ALLOWED_ORIGIN  = "http://localhost:5173"
+      ALLOWED_ORIGIN  = var.frontend_origin
       AUDIT_LOG_BUCKET = var.s3_audit_logs_bucket_name
     }
   }
@@ -100,7 +100,7 @@ resource "aws_lambda_function" "update_password" {
   function_name = "${var.project_name}-update-password-${var.environment}"
   role          = var.update_lambda_role_arn
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   
   timeout     = var.timeout_seconds
   memory_size = var.memory_mb
@@ -113,7 +113,7 @@ resource "aws_lambda_function" "update_password" {
   environment {
     variables = {
       PASSWORD_TABLE  = var.dynamodb_table_name
-      ALLOWED_ORIGIN  = "http://localhost:5173"
+      ALLOWED_ORIGIN  = var.frontend_origin
       AUDIT_LOG_BUCKET = var.s3_audit_logs_bucket_name
     }
   }
@@ -132,7 +132,7 @@ resource "aws_lambda_function" "delete_password" {
   function_name = "${var.project_name}-delete-password-${var.environment}"
   role          = var.delete_lambda_role_arn
   handler       = "index.handler"
-  runtime       = "nodejs20.x"
+  runtime       = "nodejs22.x"
   
   timeout     = var.timeout_seconds
   memory_size = var.memory_mb
@@ -145,7 +145,7 @@ resource "aws_lambda_function" "delete_password" {
   environment {
     variables = {
       PASSWORD_TABLE  = var.dynamodb_table_name
-      ALLOWED_ORIGIN  = "http://localhost:5173"
+      ALLOWED_ORIGIN  = var.frontend_origin
       AUDIT_LOG_BUCKET = var.s3_audit_logs_bucket_name
     }
   }

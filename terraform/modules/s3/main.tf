@@ -48,17 +48,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"  # AWS managed keys
-    }
-  }
-}
-
-# Enable default encryption for all objects
-resource "aws_s3_bucket_server_side_encryption_configuration" "ensure_encryption" {
-  bucket = aws_s3_bucket.audit_logs.id
-
-  rule {
-    apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
     }
   }
@@ -74,12 +63,10 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
 
     filter {}
 
-    # Delete after retention period (optimized for free tier)
     expiration {
       days = var.audit_logs_retention_days
     }
 
-    # Delete old versions after 7 days
     noncurrent_version_expiration {
       noncurrent_days = 7
     }
@@ -94,8 +81,8 @@ resource "aws_s3_bucket_logging" "audit_logs" {
   target_prefix = "bucket-access-logs/"
 }
 
-# CloudWatch Logs integration (optional - for Lambda audit logs to flow to S3)
-resource "aws_s3_bucket_policy" "allow_cloudwatch_logs" {
+# Merged bucket policy: CloudWatch Logs + Lambda audit writes
+resource "aws_s3_bucket_policy" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
   policy = jsonencode({
@@ -123,18 +110,7 @@ resource "aws_s3_bucket_policy" "allow_cloudwatch_logs" {
         }
         Action   = "s3:GetBucketVersioning"
         Resource = aws_s3_bucket.audit_logs.arn
-      }
-    ]
-  })
-}
-
-# Allow Lambda to write audit logs
-resource "aws_s3_bucket_policy" "allow_lambda_audit" {
-  bucket = aws_s3_bucket.audit_logs.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
+      },
       {
         Sid    = "AllowLambdaWriteAuditLogs"
         Effect = "Allow"

@@ -71,3 +71,8 @@ variable "delete_log_group_name" {
   description = "CloudWatch Log Group name for delete Lambda"
   type        = string
 }
+
+variable "frontend_origin" {
+  description = "Frontend origin for CORS headers"
+  type        = string
+}

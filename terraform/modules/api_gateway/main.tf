@@ -111,20 +111,20 @@ resource "aws_apigatewayv2_stage" "default" {
     throttling_rate_limit    = 10000
   }
 
-  # Access logging (optional - uncomment to enable)
-  # access_log_settings {
-  #   destination_arn = aws_cloudwatch_log_group.api_gateway.arn
-  #   format = jsonencode({
-  #     requestId    = "$context.requestId"
-  #     ip           = "$context.identity.sourceIp"
-  #     requestTime  = "$context.requestTime"
-  #     httpMethod   = "$context.httpMethod"
-  #     resourcePath = "$context.resourcePath"
-  #     status       = "$context.status"
-  #     protocol     = "$context.protocol"
-  #     responseLength = "$context.responseLength"
-  #   })
-  # }
+  access_log_settings {
+    destination_arn = var.api_gateway_log_group_arn
+    format = jsonencode({
+      requestId      = "$context.requestId"
+      ip             = "$context.identity.sourceIp"
+      requestTime    = "$context.requestTime"
+      httpMethod     = "$context.httpMethod"
+      resourcePath   = "$context.resourcePath"
+      status         = "$context.status"
+      protocol       = "$context.protocol"
+      responseLength = "$context.responseLength"
+      userAgent      = "$context.identity.userAgent"
+    })
+  }
 
   tags = {
     Name = "${var.project_name}-stage-${var.api_stage_name}"
