@@ -36,9 +36,6 @@ export const loginUser = (identifier: string, password: string) => {
       newPasswordRequired: (userAttributes, requiredAttributes) => {
         const newPassword = prompt("Enter new password") || "";
 
-        console.log("Required attributes:", requiredAttributes);
-        console.log("User attributes:", userAttributes);
-
         const attributes: Record<string, string> = {};
 
         // Loop through ALL required attributes

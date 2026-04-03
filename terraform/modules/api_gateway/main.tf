@@ -1,6 +1,5 @@
 # API Gateway Module - HTTP API with JWT Authorizer
 
-# Get current AWS account ID for Lambda URN construction
 data "aws_caller_identity" "current" {}
 
 # ========== CREATE HTTP API ==========
@@ -8,7 +7,6 @@ resource "aws_apigatewayv2_api" "password_manager" {
   name          = "${var.project_name}-api-${var.environment}"
   protocol_type = "HTTP"
   
-  # CORS Configuration - handled natively by HTTP API
   cors_configuration {
     allow_origins = [var.frontend_origin]
     allow_methods = ["*"]
@@ -24,7 +22,6 @@ resource "aws_apigatewayv2_api" "password_manager" {
 }
 
 # ========== JWT AUTHORIZER FOR COGNITO ==========
-# This validates Cognito ID tokens on each request
 resource "aws_apigatewayv2_authorizer" "cognito" {
   api_id           = aws_apigatewayv2_api.password_manager.id
   authorizer_type  = "JWT"
@@ -39,7 +36,6 @@ resource "aws_apigatewayv2_authorizer" "cognito" {
 
 # ========== CREATE ROUTES FOR LAMBDA FUNCTIONS ==========
 
-# Route 1: POST /createPasswordItem
 resource "aws_apigatewayv2_route" "create_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
   route_key          = "POST /createPasswordItem"
@@ -48,7 +44,6 @@ resource "aws_apigatewayv2_route" "create_password" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
-# Route 2: GET /getPasswordItems
 resource "aws_apigatewayv2_route" "read_passwords" {
   api_id             = aws_apigatewayv2_api.password_manager.id
   route_key          = "GET /getPasswordItems"
@@ -57,7 +52,6 @@ resource "aws_apigatewayv2_route" "read_passwords" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
-# Route 3: PUT /updatePasswordItem
 resource "aws_apigatewayv2_route" "update_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
   route_key          = "PUT /updatePasswordItem"
@@ -66,7 +60,6 @@ resource "aws_apigatewayv2_route" "update_password" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
-# Route 4: DELETE /deletePasswordItem
 resource "aws_apigatewayv2_route" "delete_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
   route_key          = "DELETE /deletePasswordItem"
@@ -76,7 +69,6 @@ resource "aws_apigatewayv2_route" "delete_password" {
 }
 
 # ========== LAMBDA INTEGRATIONS ==========
-# Each integration connects a route to a Lambda function
 
 resource "aws_apigatewayv2_integration" "create_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
@@ -107,15 +99,12 @@ resource "aws_apigatewayv2_integration" "delete_password" {
 }
 
 # ========== STAGE AND DEPLOYMENT ==========
-# The stage is where the API is actually deployed
-
 resource "aws_apigatewayv2_stage" "default" {
   api_id = aws_apigatewayv2_api.password_manager.id
   
   name   = var.api_stage_name
-  auto_deploy = true  # Automatically deploy when changes are detected
+  auto_deploy = true
   
-  # Default route settings
   default_route_settings {
     detailed_metrics_enabled = true
     throttling_burst_limit   = 5000
@@ -150,7 +139,6 @@ resource "aws_apigatewayv2_stage" "default" {
 }
 
 # ========== LAMBDA PERMISSIONS FOR API GATEWAY INVOCATION ==========
-# These allow API Gateway to invoke the Lambda functions
 
 resource "aws_lambda_permission" "create_apigw" {
   statement_id   = "AllowAPIGatewayInvoke"

@@ -1,7 +1,3 @@
-// Lambda function to update a password item in the vault
-// FIXED BUG: Original had duplicate userId in Key, now handles item key changes properly
-// Environment variables: PASSWORD_TABLE, ALLOWED_ORIGIN
-
 import {
   DynamoDBClient,
   UpdateItemCommand,
@@ -29,36 +25,25 @@ function buildResponse(statusCode, body) {
 
 export const handler = async (event) => {
   try {
-    // Handle OPTIONS requests (CORS preflight)
-    if (event.requestContext?.http?.method === "OPTIONS") {
-      return buildResponse(200, null);
-    }
-
-    // Extract user ID from Cognito token (added by authorizer)
     const userId = event.requestContext?.authorizer?.jwt?.claims?.sub;
     if (!userId) {
       return buildResponse(401, { message: "Unauthorized - no user ID" });
     }
 
-    // Parse request body
     if (!event.body) {
       return buildResponse(400, { message: "Request body is required" });
     }
 
     const body = JSON.parse(event.body);
 
-    // Validate required fields
     if (!body.site || !body.username) {
       return buildResponse(400, { message: "site and username are required" });
     }
 
-    // Extract old and new item keys
     const oldItemKey = body.oldItemKey;
     const newItemKey = `${body.site}#${body.username}`;
 
-    // If the item key changed (site or username changed), delete old and create new
     if (oldItemKey && oldItemKey !== newItemKey) {
-      // Delete the old item
       await client.send(
         new DeleteItemCommand({
           TableName: TABLE_NAME,
@@ -69,7 +54,6 @@ export const handler = async (event) => {
         })
       );
 
-      // Create new item with updated data
       const newItem = {
         userId: { S: userId },
         itemKey: { S: newItemKey },
@@ -91,12 +75,7 @@ export const handler = async (event) => {
           Item: newItem,
         })
       );
-
-      console.log(
-        `Password item migrated for user ${userId}: ${oldItemKey} → ${newItemKey}`
-      );
     } else {
-      // Item key hasn't changed, just update the existing item
       await client.send(
         new UpdateItemCommand({
           TableName: TABLE_NAME,
@@ -128,8 +107,6 @@ export const handler = async (event) => {
           },
         })
       );
-
-      console.log(`Password item updated for user ${userId}: ${newItemKey}`);
     }
 
     return buildResponse(200, { message: "Updated successfully" });

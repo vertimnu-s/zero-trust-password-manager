@@ -1,7 +1,6 @@
 # IAM Module - Least-privilege roles and policies for Lambda functions
-# Each Lambda function gets ONLY the permissions it needs
 
-# ========== TRUST POLICY - Allow Lambda to assume these roles ==========
+# ========== TRUST POLICY ==========
 locals {
   lambda_trust_policy = {
     Version = "2012-10-17"
@@ -23,7 +22,6 @@ resource "aws_iam_role" "create_password_role" {
   assume_role_policy = jsonencode(local.lambda_trust_policy)
 }
 
-# Policy: Allow PutItem only for CREATE lambda
 resource "aws_iam_role_policy" "create_password_policy" {
   name = "${var.project_name}-create-password-policy"
   role = aws_iam_role.create_password_role.id
@@ -67,7 +65,6 @@ resource "aws_iam_role" "read_passwords_role" {
   assume_role_policy = jsonencode(local.lambda_trust_policy)
 }
 
-# Policy: Allow Query and Scan (read-only) for READ lambda
 resource "aws_iam_role_policy" "read_passwords_policy" {
   name = "${var.project_name}-read-passwords-policy"
   role = aws_iam_role.read_passwords_role.id
@@ -112,7 +109,6 @@ resource "aws_iam_role" "update_password_role" {
   assume_role_policy = jsonencode(local.lambda_trust_policy)
 }
 
-# Policy: Allow UpdateItem and GetItem (to verify before update) for UPDATE lambda
 resource "aws_iam_role_policy" "update_password_policy" {
   name = "${var.project_name}-update-password-policy"
   role = aws_iam_role.update_password_role.id
@@ -157,7 +153,6 @@ resource "aws_iam_role" "delete_password_role" {
   assume_role_policy = jsonencode(local.lambda_trust_policy)
 }
 
-# Policy: Allow DeleteItem and GetItem (to verify before deleting) for DELETE lambda
 resource "aws_iam_role_policy" "delete_password_policy" {
   name = "${var.project_name}-delete-password-policy"
   role = aws_iam_role.delete_password_role.id
