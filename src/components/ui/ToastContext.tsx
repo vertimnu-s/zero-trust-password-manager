@@ -1,7 +1,9 @@
 import { useState, useCallback, type ReactNode } from 'react';
 import Toast, { type ToastType } from './Toast';
-import { ToastContext } from './useToast';
+import { ToastContext, useToast } from './useToast';
 import styles from './Toast.module.css';
+
+export { useToast };
 
 interface ToastItem {
   id: number;
