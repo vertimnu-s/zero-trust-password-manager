@@ -268,7 +268,6 @@ export class AuditLogger {
     }
 
     // In a real implementation, this would send to a secure logging service
-    console.log('AUDIT:', auditEntry);
   }
 
   getLogs(): AuditEntry[] {

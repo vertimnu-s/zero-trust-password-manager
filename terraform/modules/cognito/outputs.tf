@@ -12,7 +12,7 @@ output "user_pool_arn" {
 
 output "client_id" {
   description = "Cognito App Client ID (needed for VITE_COGNITO_CLIENT_ID)"
-  value       = aws_cognito_user_pool_client.frontend.client_id
+  value       = aws_cognito_user_pool_client.frontend.id
 }
 
 output "user_pool_name" {

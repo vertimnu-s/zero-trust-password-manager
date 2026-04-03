@@ -1,6 +1,3 @@
-// Lambda function to create a password item in the vault
-// Environment variables: PASSWORD_TABLE, ALLOWED_ORIGIN
-
 import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
 
 const client = new DynamoDBClient({});
@@ -23,33 +20,23 @@ function buildResponse(statusCode, body) {
 
 export const handler = async (event) => {
   try {
-    // Handle OPTIONS requests (CORS preflight)
-    if (event.requestContext?.http?.method === "OPTIONS") {
-      return buildResponse(200, null);
-    }
-
-    // Extract user ID from Cognito token (added by authorizer)
     const userId = event.requestContext?.authorizer?.jwt?.claims?.sub;
     if (!userId) {
-      return buildResponse(401, { message: "Unauthorized - no user ID" });
+      return buildResponse(401, { message: "Unauthorized" });
     }
 
-    // Parse request body
     if (!event.body) {
       return buildResponse(400, { message: "Request body is required" });
     }
 
     const body = JSON.parse(event.body);
 
-    // Validate required fields
     if (!body.site || !body.username) {
       return buildResponse(400, { message: "site and username are required" });
     }
 
-    // Create composite item key
     const itemKey = `${body.site}#${body.username}`;
 
-    // Build DynamoDB item with proper typing
     const item = {
       userId: { S: userId },
       itemKey: { S: itemKey },
@@ -65,7 +52,6 @@ export const handler = async (event) => {
       createdAt: { N: Date.now().toString() },
     };
 
-    // Insert into DynamoDB
     await client.send(
       new PutItemCommand({
         TableName: TABLE_NAME,
@@ -73,11 +59,9 @@ export const handler = async (event) => {
       })
     );
 
-    console.log(`Password item created for user ${userId}: ${itemKey}`);
-
     return buildResponse(200, { message: "Saved successfully" });
   } catch (error) {
-    console.error("Error in create-password handler:", error);
+    console.error("Error creating password:", error);
     return buildResponse(500, { error: error.message });
   }
 };

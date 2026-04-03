@@ -1,5 +1,4 @@
-// Lambda function to read/fetch password items from the vault
-// Environment variables: PASSWORD_TABLE, ALLOWED_ORIGIN
+
 
 import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
 
@@ -23,18 +22,11 @@ function buildResponse(statusCode, body) {
 
 export const handler = async (event) => {
   try {
-    // Handle OPTIONS requests (CORS preflight)
-    if (event.requestContext?.http?.method === "OPTIONS") {
-      return buildResponse(200, null);
-    }
-
-    // Extract user ID from Cognito token (added by authorizer)
     const userId = event.requestContext?.authorizer?.jwt?.claims?.sub;
     if (!userId) {
-      return buildResponse(401, { message: "Unauthorized - no user ID" });
+      return buildResponse(401, { message: "Unauthorized" });
     }
 
-    // Query all password items for this user
     const result = await client.send(
       new QueryCommand({
         TableName: TABLE_NAME,
@@ -45,13 +37,9 @@ export const handler = async (event) => {
       })
     );
 
-    console.log(
-      `Retrieved ${result.Items?.length || 0} password items for user ${userId}`
-    );
-
     return buildResponse(200, result.Items || []);
   } catch (error) {
-    console.error("Error in read-passwords handler:", error);
+    console.error("Error in read-passwords:", error);
     return buildResponse(500, { error: error.message });
   }
 };

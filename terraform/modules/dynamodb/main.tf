@@ -29,14 +29,13 @@ resource "aws_dynamodb_table" "password_vault" {
 
   # POINT-IN-TIME RECOVERY - Critical for a password manager!
   # Allows restore to any point in time for last 35 days
-  point_in_time_recovery_specification {
-    point_in_time_recovery_enabled = var.point_in_time_recovery
+  point_in_time_recovery {
+    enabled = var.point_in_time_recovery
   }
 
   # STREAMS - Capture item-level modifications (optional enhancement)
-  stream_specification {
-    stream_view_type = var.enable_stream ? "NEW_AND_OLD_IMAGES" : null
-  }
+  stream_enabled   = true
+  stream_view_type = "NEW_AND_OLD_IMAGES"
 
   # TAGS
   tags = {

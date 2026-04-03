@@ -1,6 +1,3 @@
-// Lambda function to delete a password item from the vault
-// Environment variables: PASSWORD_TABLE, ALLOWED_ORIGIN
-
 import { DynamoDBClient, DeleteItemCommand } from "@aws-sdk/client-dynamodb";
 
 const client = new DynamoDBClient({});
@@ -23,18 +20,11 @@ function buildResponse(statusCode, body) {
 
 export const handler = async (event) => {
   try {
-    // Handle OPTIONS requests (CORS preflight)
-    if (event.requestContext?.http?.method === "OPTIONS") {
-      return buildResponse(200, null);
-    }
-
-    // Extract user ID from Cognito token (added by authorizer)
     const userId = event.requestContext?.authorizer?.jwt?.claims?.sub;
     if (!userId) {
-      return buildResponse(401, { message: "Unauthorized - no user ID" });
+      return buildResponse(401, { message: "Unauthorized" });
     }
 
-    // Get query parameters: site and username
     const { site, username } = event.queryStringParameters || {};
 
     if (!site || !username) {
@@ -43,10 +33,8 @@ export const handler = async (event) => {
       });
     }
 
-    // Create composite item key
     const itemKey = `${site}#${username}`;
 
-    // Delete from DynamoDB
     await client.send(
       new DeleteItemCommand({
         TableName: TABLE_NAME,
@@ -57,11 +45,9 @@ export const handler = async (event) => {
       })
     );
 
-    console.log(`Password item deleted for user ${userId}: ${itemKey}`);
-
     return buildResponse(200, { message: "Deleted successfully" });
   } catch (error) {
-    console.error("Error in delete-password handler:", error);
+    console.error("Error deleting password:", error);
     return buildResponse(500, { error: error.message });
   }
 };

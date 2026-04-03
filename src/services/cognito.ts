@@ -36,9 +36,6 @@ export const loginUser = (identifier: string, password: string) => {
       newPasswordRequired: (userAttributes, requiredAttributes) => {
         const newPassword = prompt("Enter new password") || "";
 
-        console.log("Required attributes:", requiredAttributes);
-        console.log("User attributes:", userAttributes);
-
         const attributes: Record<string, string> = {};
 
         // Loop through ALL required attributes
@@ -126,6 +123,28 @@ export const resendConfirmationCode = (username: string) => {
       } else {
         resolve(result);
       }
+    });
+  });
+};
+
+export const changePassword = (oldPassword: string, newPassword: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const cognitoUser = userPool.getCurrentUser();
+    if (!cognitoUser) {
+      reject(new Error("No user session found. Please log in again."));
+      return;
+    }
+
+    cognitoUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      cognitoUser.changePassword(oldPassword, newPassword, (err, result) => {
+        if (err) reject(err);
+        else resolve(result || "SUCCESS");
+      });
     });
   });
 };
