@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { loginUser, registerUser, confirmUser, resendConfirmationCode } from "../services/cognito";
 import { validatePassword } from "../utils/passwordValidator";
-import { useToast } from "../components/ui/ToastContext";
+import { useToast } from "../components/ui/useToast";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";

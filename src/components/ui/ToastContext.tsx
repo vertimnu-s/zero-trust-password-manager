@@ -1,23 +1,12 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from 'react';
+import { useState, useCallback, type ReactNode } from 'react';
 import Toast, { type ToastType } from './Toast';
+import { ToastContext } from './useToast';
 import styles from './Toast.module.css';
 
 interface ToastItem {
   id: number;
   message: string;
   type: ToastType;
-}
-
-interface ToastContextType {
-  addToast: (message: string, type?: ToastType) => void;
-}
-
-const ToastContext = createContext<ToastContextType | null>(null);
-
-export function useToast() {
-  const context = useContext(ToastContext);
-  if (!context) throw new Error('useToast must be used within ToastProvider');
-  return context;
 }
 
 let toastId = 0;

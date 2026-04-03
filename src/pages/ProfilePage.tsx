@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useToast } from '../components/ui/ToastContext';
+import { useToast } from '../components/ui/useToast';
 import { changePassword } from '../services/cognito';
 import { validatePassword } from '../utils/passwordValidator';
 import Card from '../components/ui/Card';

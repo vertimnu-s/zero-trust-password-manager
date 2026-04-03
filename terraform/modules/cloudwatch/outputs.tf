@@ -25,6 +25,11 @@ output "api_gateway_log_group_name" {
   value       = aws_cloudwatch_log_group.api_gateway.name
 }
 
+output "api_gateway_log_group_arn" {
+  description = "CloudWatch Log Group ARN for API Gateway access logging"
+  value       = aws_cloudwatch_log_group.api_gateway.arn
+}
+
 output "log_group_names" {
   description = "All CloudWatch log group names"
   value = {

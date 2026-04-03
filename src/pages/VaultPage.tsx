@@ -6,7 +6,7 @@ import {
   deletePassword,
 } from "../services/api";
 import { encryptPassword, decryptPassword, secureCopyToClipboard, secureWipeString, generateSecurePassword, sanitizeInput, validateSite, validateUsername, auditLogger } from "../services/crypto";
-import { useToast } from "../components/ui/ToastContext";
+import { useToast } from "../components/ui/useToast";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
@@ -101,6 +101,11 @@ function VaultPage() {
   const [masterInput, setMasterInput] = useState("");
   const [masterResolve, setMasterResolve] = useState<((value: string) => void) | null>(null);
   const [showAddForm, setShowAddForm] = useState(false);
+
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutUntil, setLockoutUntil] = useState<number | null>(null);
+  const MAX_FAILED_ATTEMPTS = 5;
+  const LOCKOUT_DURATION_MS = 5 * 60 * 1000;
 
   const lockVault = useCallback(() => {
     // Securely wipe decrypted passwords from memory
@@ -205,7 +210,7 @@ function VaultPage() {
     return () => window.clearInterval(interval);
   }, [lockDeadline, lockVault]);
 
-  const promptMasterPassword = (_message?: string): Promise<string> => {
+  const promptMasterPassword = (): Promise<string> => {
     return new Promise((resolve) => {
       if (masterPassword) {
         resolve(masterPassword);
@@ -241,10 +246,16 @@ function VaultPage() {
   };
 
   const handleDecrypt = async (item: VaultItem) => {
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      addToast(`Too many failed attempts. Try again in ${remaining}s`, "error");
+      return;
+    }
+
     try {
       let passw: string;
       if (item.requireMasterPassword) {
-        passw = await promptMasterPassword("This item requires the master password");
+        passw = await promptMasterPassword();
       } else {
         if (!masterPassword) {
           passw = await promptMasterPassword();
@@ -258,6 +269,9 @@ function VaultPage() {
       }
 
       const plain = await decryptPassword(item.cipherText, item.iv, item.salt, passw, item.site);
+
+      setFailedAttempts(0);
+      setLockoutUntil(null);
       setDecrypted((prev) => ({ ...prev, [item.id]: plain }));
       setShowPassword((prev) => ({ ...prev, [item.id]: true }));
 
@@ -274,9 +288,20 @@ function VaultPage() {
         auditLogger.log({ action: 'password_decrypt', site: item.site, username: item.username, success: true, details: 'Decrypted password auto-wiped from memory' });
       }, 120000);
 
-    } catch (error) {
-      auditLogger.log({ action: 'password_decrypt', site: item.site, username: item.username, success: false, details: error instanceof Error ? error.message : String(error) });
-      addToast("Decryption failed. Check your master password.", "error");
+    } catch {
+      const newCount = failedAttempts + 1;
+      setFailedAttempts(newCount);
+      auditLogger.log({ action: 'password_decrypt', site: item.site, username: item.username, success: false, details: `Failed attempt ${newCount}/${MAX_FAILED_ATTEMPTS}` });
+
+      if (newCount >= MAX_FAILED_ATTEMPTS) {
+        setLockoutUntil(Date.now() + LOCKOUT_DURATION_MS);
+        lockVault();
+        setFailedAttempts(0);
+        addToast("Too many failed attempts. Vault locked for 5 minutes.", "error");
+        auditLogger.log({ action: 'vault_lock', success: true, details: 'Lockout triggered after repeated failed decryptions' });
+      } else {
+        addToast(`Decryption failed (${newCount}/${MAX_FAILED_ATTEMPTS} attempts)`, "error");
+      }
     }
   };
 

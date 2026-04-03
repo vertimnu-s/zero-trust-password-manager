@@ -111,6 +111,9 @@ module "api_gateway" {
   cognito_user_pool_arn       = module.cognito.user_pool_arn
   cognito_client_id           = module.cognito.client_id
   
+  # CloudWatch for access logging
+  api_gateway_log_group_arn   = module.cloudwatch.api_gateway_log_group_arn
+  
   # Depends on Lambda and Cognito being ready
   depends_on = [module.lambda, module.cognito]
 }

@@ -75,3 +75,8 @@ variable "cognito_client_id" {
   description = "Cognito App Client ID for JWT audience"
   type        = string
 }
+
+variable "api_gateway_log_group_arn" {
+  description = "CloudWatch Log Group ARN for API Gateway access logging"
+  type        = string
+}
