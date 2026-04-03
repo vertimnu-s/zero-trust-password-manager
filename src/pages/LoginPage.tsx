@@ -1,187 +1,214 @@
 import { useState } from "react";
 import { loginUser, registerUser, confirmUser, resendConfirmationCode } from "../services/cognito";
 import { validatePassword } from "../utils/passwordValidator";
+import { useToast } from "../components/ui/ToastContext";
+import Card from "../components/ui/Card";
+import Input from "../components/ui/Input";
+import Button from "../components/ui/Button";
+import PasswordStrength from "../components/ui/PasswordStrength";
+import { Shield, Mail, Lock, Eye, EyeOff, KeyRound } from "lucide-react";
+import styles from "./LoginPage.module.css";
+
+type AuthView = "login" | "register" | "confirm";
 
 function LoginPage({ onLogin }: { onLogin: () => void }) {
+  const { addToast } = useToast();
+  const [view, setView] = useState<AuthView>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isRegistering, setIsRegistering] = useState(false);
-  const [isConfirming, setIsConfirming] = useState(false);
+  const [showPasswordText, setShowPasswordText] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    try {
-      if (!email.trim() || !password.trim()) {
-        alert("Email and password are required.");
-        return;
-      }
+    if (!email.trim() || !password.trim()) {
+      addToast("Email and password are required.", "error");
+      return;
+    }
 
+    setLoading(true);
+    try {
       const token = await loginUser(email.trim(), password);
       localStorage.setItem("idToken", token as string);
-
+      addToast("Login successful!", "success");
       onLogin();
-      alert("Login successful!");
     } catch (error) {
-      console.error(error);
-      alert("Login failed. Check credentials or complete required action.");
+      const message = error instanceof Error ? error.message : String(error);
+      addToast(`Login failed: ${message}`, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handlePasswordChange = (newPassword: string) => {
-    setPassword(newPassword);
-  };
-
   const handleRegister = async () => {
+    if (!email.trim() || !password.trim()) {
+      addToast("Email and password are required.", "error");
+      return;
+    }
+
+    const validation = validatePassword(password);
+    if (!validation.isValid) {
+      addToast("Password does not meet all requirements.", "error");
+      return;
+    }
+
+    setLoading(true);
     try {
-      if (!email.trim() || !password.trim()) {
-        alert("Email and password are required to register.");
-        return;
-      }
-
-      const validation = validatePassword(password);
-      if (!validation.isValid) {
-        alert(`Password requirements not met:\n• ${validation.errors.join("\n• ")}`);
-        return;
-      }
-
-      // Use email as both username and preferred_username
       await registerUser(email.trim(), password, email.trim(), email.trim());
-      alert("Registration successful. Enter the confirmation code sent by email to finish.");
-      setIsConfirming(true);
-      setIsRegistering(false);
-    } catch (error: unknown) {
-      console.error(error);
-      const message =
-        error && typeof error === "object" && "message" in error && typeof (error as { message: string }).message === "string"
-          ? (error as { message: string }).message
-          : String(error);
-      alert(`Registration failed: ${message}`);
+      addToast("Registration successful! Check your email for the verification code.", "success");
+      setView("confirm");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      addToast(`Registration failed: ${message}`, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleConfirm = async () => {
-    try {
-      if (!email.trim() || !verificationCode.trim()) {
-        alert("Email and verification code are required.");
-        return;
-      }
+    if (!email.trim() || !verificationCode.trim()) {
+      addToast("Email and verification code are required.", "error");
+      return;
+    }
 
-      // Use email as the username
+    setLoading(true);
+    try {
       await confirmUser(email.trim(), verificationCode.trim());
-      alert("Account confirmed. You may now log in.");
-      setIsConfirming(false);
+      addToast("Account confirmed! You can now log in.", "success");
+      setView("login");
       setVerificationCode("");
-      setIsRegistering(false);
-    } catch (error: unknown) {
-      console.error(error);
-      const message =
-        error && typeof error === "object" && "message" in error && typeof (error as { message: string }).message === "string"
-          ? (error as { message: string }).message
-          : String(error);
-      alert(`Confirmation failed: ${message}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      addToast(`Confirmation failed: ${message}`, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleResend = async () => {
+    if (!email.trim()) {
+      addToast("Email is required to resend code.", "error");
+      return;
+    }
     try {
-      if (!email.trim()) {
-        alert("Email is required to resend code.");
-        return;
-      }
-      // Use email as the username
       await resendConfirmationCode(email.trim());
-      alert("Confirmation code resent. Check your email.");
-    } catch (error: unknown) {
-      console.error(error);
-      const message =
-        error && typeof error === "object" && "message" in error && typeof (error as { message: string }).message === "string"
-          ? (error as { message: string }).message
-          : String(error);
-      alert(`Resend failed: ${message}`);
+      addToast("Verification code resent. Check your email.", "info");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      addToast(`Resend failed: ${message}`, "error");
     }
   };
 
-  const passwordValidation = isRegistering ? validatePassword(password) : null;
+  const handleSubmit = () => {
+    if (loading) return;
+    if (view === "login") handleLogin();
+    else if (view === "register") handleRegister();
+    else if (view === "confirm") handleConfirm();
+  };
 
   return (
-    <div style={{ padding: "40px", maxWidth: "400px" }}>
-      <h2>{isRegistering ? "Register" : "Login"}</h2>
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
-      <br />
-      <br />
-      <input
-        type="password"
-        placeholder="Password"
-        value={password}
-        onChange={(e) => handlePasswordChange(e.target.value)}
-      />
-      <br />
-      {isRegistering && passwordValidation && (
-        <div style={{ marginTop: "10px", fontSize: "14px" }}>
-          {passwordValidation.isValid ? (
-            <div style={{ color: "green" }}>✓ Password meets requirements</div>
+    <div className={styles.page}>
+      <Card className={styles.card}>
+        <div className={styles.header}>
+          <Shield size={48} className={styles.icon} />
+          <h1 className={styles.title}>Zero Trust Vault</h1>
+          <p className={styles.subtitle}>
+            {view === "confirm"
+              ? "Verify your email address"
+              : "Secure password management"}
+          </p>
+        </div>
+
+        <div className={styles.divider} />
+
+        <div
+          className={styles.form}
+          onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+        >
+          {view === "confirm" ? (
+            <>
+              <Input
+                label="Verification Code"
+                type="text"
+                value={verificationCode}
+                onChange={(e) => setVerificationCode(e.target.value)}
+                placeholder="Enter the code from your email"
+                icon={<KeyRound size={18} />}
+              />
+              <Button onClick={handleConfirm} loading={loading} fullWidth>
+                Confirm Account
+              </Button>
+              <div className={styles.actions}>
+                <Button variant="ghost" onClick={handleResend} size="sm">
+                  Resend Code
+                </Button>
+                <Button variant="ghost" onClick={() => setView("login")} size="sm">
+                  Back to Login
+                </Button>
+              </div>
+            </>
           ) : (
-            <div style={{ color: "#ff6b6b" }}>
-              <strong>Password requirements:</strong>
-              <ul style={{ margin: "5px 0", paddingLeft: "20px" }}>
-                {passwordValidation.errors.map((error, idx) => (
-                  <li key={idx}>{error}</li>
-                ))}
-              </ul>
-            </div>
+            <>
+              <Input
+                label="Email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                icon={<Mail size={18} />}
+              />
+              <Input
+                label="Password"
+                type={showPasswordText ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                icon={<Lock size={18} />}
+                rightElement={
+                  <button
+                    type="button"
+                    className={styles.eyeButton}
+                    onClick={() => setShowPasswordText(!showPasswordText)}
+                    tabIndex={-1}
+                  >
+                    {showPasswordText ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                }
+              />
+              {view === "register" && password && (
+                <PasswordStrength password={password} />
+              )}
+              <Button
+                onClick={view === "login" ? handleLogin : handleRegister}
+                loading={loading}
+                fullWidth
+              >
+                {view === "login" ? "Log In" : "Create Account"}
+              </Button>
+            </>
           )}
         </div>
-      )}
-      <br />
-      {isConfirming ? (
-        <div>
-          <input
-            type="text"
-            placeholder="Verification Code"
-            value={verificationCode}
-            onChange={(e) => setVerificationCode(e.target.value)}
-          />
-          <br />
-          <br />
-          <button onClick={handleConfirm} style={{ marginRight: "10px" }}>
-            Confirm account
-          </button>
-          <button onClick={handleResend} style={{ marginRight: "10px" }}>
-            Resend code
-          </button>
-          <button
-            onClick={() => {
-              setIsConfirming(false);
-              setIsRegistering(false);
-            }}
-          >
-            Back to login
-          </button>
-        </div>
-      ) : (
-        <div>
-          <button onClick={handleLogin} style={{ marginRight: "10px" }}>
-            Login
-          </button>
-          {isRegistering ? (
-            <button onClick={handleRegister} style={{ marginRight: "10px" }}>
-              Complete registration
-            </button>
-          ) : (
-            <button onClick={() => setIsRegistering(true)} style={{ marginRight: "10px" }}>
-              Register
-            </button>
-          )}
-          {isRegistering && (
-            <button onClick={() => setIsRegistering(false)}>Cancel</button>
-          )}
-        </div>
-      )}
+
+        {view !== "confirm" && (
+          <div className={styles.footer}>
+            {view === "login" ? (
+              <span>
+                Don&apos;t have an account?{" "}
+                <button className={styles.link} onClick={() => setView("register")}>
+                  Register
+                </button>
+              </span>
+            ) : (
+              <span>
+                Already have an account?{" "}
+                <button className={styles.link} onClick={() => setView("login")}>
+                  Log in
+                </button>
+              </span>
+            )}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

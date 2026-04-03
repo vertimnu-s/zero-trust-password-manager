@@ -126,3 +126,25 @@ export const resendConfirmationCode = (username: string) => {
     });
   });
 };
+
+export const changePassword = (oldPassword: string, newPassword: string): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const cognitoUser = userPool.getCurrentUser();
+    if (!cognitoUser) {
+      reject(new Error("No user session found. Please log in again."));
+      return;
+    }
+
+    cognitoUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      cognitoUser.changePassword(oldPassword, newPassword, (err, result) => {
+        if (err) reject(err);
+        else resolve(result || "SUCCESS");
+      });
+    });
+  });
+};
