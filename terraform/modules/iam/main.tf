@@ -121,7 +121,9 @@ resource "aws_iam_role_policy" "update_password_policy" {
         Effect = "Allow"
         Action = [
           "dynamodb:UpdateItem",
-          "dynamodb:GetItem"
+          "dynamodb:GetItem",
+          "dynamodb:DeleteItem",
+          "dynamodb:PutItem"
         ]
         Resource = var.dynamodb_table_arn
       },

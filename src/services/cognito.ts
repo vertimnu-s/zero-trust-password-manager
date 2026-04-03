@@ -33,34 +33,8 @@ export const loginUser = (identifier: string, password: string) => {
         reject(err);
       },
 
-      newPasswordRequired: (userAttributes, requiredAttributes) => {
-        const newPassword = prompt("Enter new password") || "";
-
-        const attributes: Record<string, string> = {};
-
-        // Loop through ALL required attributes
-        requiredAttributes.forEach((attr: string) => {
-          let value = "";
-
-          // If Cognito already has a value (like email), use it
-          if (userAttributes[attr]) {
-            value = userAttributes[attr];
-          } else {
-            value = prompt(`Enter ${attr}`) || "";
-          }
-
-          attributes[attr] = value;
-        });
-
-        user.completeNewPasswordChallenge(newPassword, attributes, {
-          onSuccess: (result) => {
-            resolve(result.getIdToken().getJwtToken());
-          },
-          onFailure: (err) => {
-            console.error("Challenge error:", err);
-            reject(err);
-          }
-        });
+      newPasswordRequired: () => {
+        reject(new Error("Password change required. Please contact support."));
       }
     });
   });

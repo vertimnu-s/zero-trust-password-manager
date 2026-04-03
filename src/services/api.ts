@@ -72,8 +72,7 @@ export const fetchPasswords = async () => {
     }
 
     return handleResponse(response);
-  } catch (error) {
-    console.warn("fetchPasswords failed", error);
+  } catch {
     return [];
   }
 };
@@ -128,7 +127,6 @@ export const deletePassword = async (site: string, username: string) => {
 };
 
 function handleUnauthorized() {
-  alert("Session expired. Please log in again.");
   localStorage.removeItem("idToken");
   window.location.reload();
 }

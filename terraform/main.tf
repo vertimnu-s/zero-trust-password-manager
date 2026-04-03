@@ -66,6 +66,9 @@ module "lambda" {
   dynamodb_table_name         = module.dynamodb.table_name
   s3_audit_logs_bucket_name   = module.s3.audit_logs_bucket_name
   
+  # CORS origin for Lambda responses
+  frontend_origin             = var.frontend_origin
+  
   # Lambda configuration
   timeout_seconds             = var.lambda_timeout_seconds
   memory_mb                   = var.lambda_memory_mb

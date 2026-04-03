@@ -117,7 +117,6 @@ function VaultPage() {
       success: true,
       details: 'Vault locked and memory wiped'
     });
-    console.info("Vault auto-locked.");
   }, [decrypted]);
 
   const [editId, setEditId] = useState<string | null>(null);
@@ -163,8 +162,7 @@ function VaultPage() {
         return newItems;
       }
       return [];
-    } catch (error) {
-      console.error("Failed to load passwords", error);
+    } catch {
       return [];
     }
   };
@@ -278,7 +276,6 @@ function VaultPage() {
 
     } catch (error) {
       auditLogger.log({ action: 'password_decrypt', site: item.site, username: item.username, success: false, details: error instanceof Error ? error.message : String(error) });
-      console.error("Decrypt failed", error);
       addToast("Decryption failed. Check your master password.", "error");
     }
   };
@@ -359,7 +356,6 @@ function VaultPage() {
       setShowAddForm(false);
     } catch (error) {
       auditLogger.log({ action: editId ? 'password_update' : 'password_create', success: false, details: error instanceof Error ? error.message : String(error) });
-      console.error("Save failed", error);
       addToast("Could not save password item", "error");
     }
   };
@@ -404,8 +400,7 @@ function VaultPage() {
       const plain = await decryptPassword(selectedItem.cipherText, selectedItem.iv, selectedItem.salt, passw, selectedItem.site);
       setModalPassword(plain);
       setDecrypted((prev) => ({ ...prev, [selectedItem.id]: plain }));
-    } catch (error) {
-      console.error("Reveal failed", error);
+    } catch {
       addToast("Failed to reveal password", "error");
     }
   };
@@ -423,8 +418,7 @@ function VaultPage() {
         return copy;
       });
       addToast("Item deleted", "success");
-    } catch (error) {
-      console.error("Delete failed", error);
+    } catch {
       addToast("Could not delete item", "error");
     }
   };
@@ -434,8 +428,7 @@ function VaultPage() {
     try {
       await updatePassword(item.site, item.username, item.site, item.username, item.cipherText, item.iv, item.salt, item.category, item.folder, updated.favorite, item.requireMasterPassword);
       setItems((current) => current.map((i) => (i.id === item.id ? updated : i)));
-    } catch (error) {
-      console.error("Favorite update failed", error);
+    } catch {
       addToast("Could not update favorite status", "error");
     }
   };
