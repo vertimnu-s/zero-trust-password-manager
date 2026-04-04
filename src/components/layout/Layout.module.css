@@ -7,4 +7,5 @@
   flex: 1;
   overflow-y: auto;
   max-height: 100vh;
+  padding: var(--space-lg) var(--space-2xl);
 }

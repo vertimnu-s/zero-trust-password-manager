@@ -1,6 +1,7 @@
 .page {
-  padding: var(--space-2xl);
-  max-width: 1000px;
+  padding: var(--space-2xl) var(--space-2xl) var(--space-2xl) var(--space-2xl);
+  max-width: 1200px;
+  width: 100%;
 }
 
 /* ========== Header ========== */
