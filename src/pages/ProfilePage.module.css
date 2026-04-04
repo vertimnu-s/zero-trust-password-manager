@@ -36,7 +36,11 @@
 }
 
 .form {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--space-md);
+}
+
+.form > :last-child {
+  grid-column: 1 / -1;
 }
