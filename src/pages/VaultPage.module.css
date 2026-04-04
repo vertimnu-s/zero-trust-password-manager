@@ -132,7 +132,7 @@
 
 .formGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: var(--space-md);
 }
 
@@ -240,9 +240,9 @@
 }
 
 .itemList {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--space-md);
 }
 
 .item {
@@ -357,8 +357,8 @@
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  padding: var(--space-xl);
-  width: 440px;
+  padding: var(--space-xl) var(--space-2xl);
+  width: 520px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-lg);
@@ -453,8 +453,8 @@
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-xl);
-  padding: var(--space-xl);
-  width: 380px;
+  padding: var(--space-xl) var(--space-2xl);
+  width: 440px;
   box-shadow: var(--shadow-lg);
   animation: scaleIn 0.2s ease;
 }
