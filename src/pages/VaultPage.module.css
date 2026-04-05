@@ -489,3 +489,56 @@
   from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
+
+/* ========== Loading Spinner ========== */
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--color-primary);
+  margin-bottom: var(--space-md);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ========== Delete Confirm ========== */
+.deleteConfirmIcon {
+  text-align: center;
+  color: var(--color-danger);
+  margin-bottom: var(--space-md);
+}
+
+.deleteButton {
+  background-color: var(--color-danger) !important;
+}
+
+.deleteButton:hover {
+  background-color: #d35d5d !important;
+}
+
+/* ========== Breach Check ========== */
+.breachStatus {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.breachWarning {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  font-weight: 500;
+}
+
+.breachSafe {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+}

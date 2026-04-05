@@ -6,11 +6,12 @@ import {
   deletePassword,
 } from "../services/api";
 import { encryptPassword, decryptPassword, secureCopyToClipboard, secureWipeString, generateSecurePassword, sanitizeInput, validateSite, validateUsername, auditLogger } from "../services/crypto";
+import { checkPasswordBreach } from "../services/hibp";
 import { useToast } from "../components/ui/useToast";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { Search, Plus, Pencil, Trash2, Star, Eye, EyeOff, Copy, Lock, Unlock, FolderOpen, Shield, Wand2, X, Info, KeyRound } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Star, Eye, EyeOff, Copy, Lock, Unlock, FolderOpen, Shield, Wand2, X, Info, KeyRound, Loader2, AlertTriangle } from "lucide-react";
 import styles from "./VaultPage.module.css";
 
 type ApiPasswordItem = {
@@ -82,6 +83,7 @@ function toVaultItem(item: ApiPasswordItem): VaultItem {
 function VaultPage() {
   const { addToast } = useToast();
   const [items, setItems] = useState<VaultItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [decrypted, setDecrypted] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState<Record<string, boolean>>({});
   const [masterPassword, setMasterPassword] = useState("");
@@ -142,6 +144,10 @@ function VaultPage() {
   const [generatorIncludeLower, setGeneratorIncludeLower] = useState(true);
   const [generatorIncludeUpper, setGeneratorIncludeUpper] = useState(true);
 
+  const [deleteTarget, setDeleteTarget] = useState<VaultItem | null>(null);
+  const [breachCount, setBreachCount] = useState<number | null>(null);
+  const [checkingBreach, setCheckingBreach] = useState(false);
+
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
       const byCategory = filterCategory === "all" || item.category === filterCategory;
@@ -178,10 +184,10 @@ function VaultPage() {
     const init = async () => {
       const newItems = await loadPasswords();
       if (canceled) return;
-      // Defer state update to avoid synchronous setState within effect semantics
       window.requestAnimationFrame(() => {
         if (!canceled) {
           setItems(newItems);
+          setLoading(false);
         }
       });
     };
@@ -327,6 +333,15 @@ function VaultPage() {
         return;
       }
 
+      try {
+        const count = await checkPasswordBreach(sanitizedPassword);
+        if (count > 0) {
+          addToast(`Warning: This password has appeared in ${count.toLocaleString()} data breaches. Consider using a different password.`, "error");
+        }
+      } catch {
+        // HIBP check is best-effort, don't block save
+      }
+
       let passw: string;
       if (!masterPassword) {
         passw = await promptMasterPassword();
@@ -433,18 +448,24 @@ function VaultPage() {
 
 
   const handleDelete = async (item: VaultItem) => {
-    if (!window.confirm(`Delete ${item.site} / ${item.username}?`)) return;
+    setDeleteTarget(item);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
     try {
-      await deletePassword(item.site, item.username);
-      setItems((current) => current.filter((i) => i.id !== item.id));
+      await deletePassword(deleteTarget.site, deleteTarget.username);
+      setItems((current) => current.filter((i) => i.id !== deleteTarget.id));
       setDecrypted((current) => {
         const copy = { ...current };
-        delete copy[item.id];
+        delete copy[deleteTarget.id];
         return copy;
       });
       addToast("Item deleted", "success");
     } catch {
       addToast("Could not delete item", "error");
+    } finally {
+      setDeleteTarget(null);
     }
   };
 
@@ -481,6 +502,17 @@ function VaultPage() {
       });
       setPassword(generated);
       auditLogger.log({ action: 'password_create', success: true, details: `Generated secure password of length ${generatorLength}` });
+
+      setCheckingBreach(true);
+      checkPasswordBreach(generated)
+        .then((count) => {
+          setBreachCount(count);
+          if (count > 0) {
+            addToast(`Generated password found in ${count.toLocaleString()} breaches. Generate a new one.`, "error");
+          }
+        })
+        .catch(() => setBreachCount(null))
+        .finally(() => setCheckingBreach(false));
     } catch (error) {
       auditLogger.log({ action: 'password_create', success: false, details: error instanceof Error ? error.message : String(error) });
       addToast("Failed to generate password", "error");
@@ -585,9 +617,24 @@ function VaultPage() {
             <Input label="Site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="example.com" />
             <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="user@example.com" />
             <div className={`${styles.formFullRow} ${styles.passwordInputRow}`}>
-              <Input label="Password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter or generate a password" />
+              <Input label="Password" value={password} onChange={(e) => { setPassword(e.target.value); setBreachCount(null); }} placeholder="Enter or generate a password" />
               <Button variant="secondary" icon={<Wand2 size={16} />} onClick={generatePassword}>Generate</Button>
             </div>
+            {checkingBreach && (
+              <div className={`${styles.formFullRow} ${styles.breachStatus}`}>
+                <Loader2 size={14} className={styles.spinner} /> Checking breach databases...
+              </div>
+            )}
+            {breachCount !== null && breachCount > 0 && !checkingBreach && (
+              <div className={`${styles.formFullRow} ${styles.breachWarning}`}>
+                <AlertTriangle size={14} /> This password appeared in {breachCount.toLocaleString()} data breaches
+              </div>
+            )}
+            {breachCount === 0 && !checkingBreach && (
+              <div className={`${styles.formFullRow} ${styles.breachSafe}`}>
+                <Shield size={14} /> Not found in any known data breaches
+              </div>
+            )}
             <div className={styles.selectWrapper}>
               <span className={styles.selectLabel}>Category</span>
               <select className={styles.select} value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -630,7 +677,12 @@ function VaultPage() {
       )}
 
       {/* Vault Items */}
-      {filteredItems.length === 0 ? (
+      {loading ? (
+        <div className={styles.emptyState}>
+          <Loader2 size={48} className={styles.spinner} />
+          <p className={styles.emptyTitle}>Loading vault...</p>
+        </div>
+      ) : filteredItems.length === 0 ? (
         <div className={styles.emptyState}>
           <KeyRound size={48} className={styles.emptyIcon} />
           <p className={styles.emptyTitle}>No items found</p>
@@ -723,6 +775,25 @@ function VaultPage() {
               {!modalPassword && <Button variant="secondary" size="sm" icon={<Eye size={14} />} onClick={handleModalRevealPassword}>Reveal</Button>}
               <Button variant="secondary" size="sm" icon={<Pencil size={14} />} onClick={() => { handleEdit(selectedItem); closeItemModal(); }}>Edit</Button>
               <Button variant="ghost" size="sm" onClick={closeItemModal}>Close</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirm Modal */}
+      {deleteTarget && (
+        <div className={styles.modalOverlay} onClick={() => setDeleteTarget(null)}>
+          <div className={styles.masterModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.deleteConfirmIcon}>
+              <AlertTriangle size={32} />
+            </div>
+            <h3 className={styles.masterTitle}>Delete Item</h3>
+            <p className={styles.masterSubtitle}>
+              Are you sure you want to delete <strong>{deleteTarget.site}</strong> / <strong>{deleteTarget.username}</strong>? This action cannot be undone.
+            </p>
+            <div className={styles.masterActions}>
+              <Button variant="ghost" onClick={() => setDeleteTarget(null)} fullWidth>Cancel</Button>
+              <Button onClick={confirmDelete} fullWidth className={styles.deleteButton}>Delete</Button>
             </div>
           </div>
         </div>
