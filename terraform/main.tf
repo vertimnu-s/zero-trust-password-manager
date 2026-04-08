@@ -118,10 +118,44 @@ module "api_gateway" {
   depends_on = [module.lambda, module.cognito]
 }
 
-# 7. CLOUDWATCH MODULE - Logging and monitoring
+# 7. SECURITY MONITORING — GuardDuty threat detection + SNS email alerts
+module "security_monitoring" {
+  source = "./modules/security_monitoring"
+
+  project_name = var.project_name
+  environment  = var.environment
+  enabled      = var.guardduty_enabled
+  alert_email  = var.security_alert_email
+}
+
+# 8. CLOUDWATCH MODULE - Logging and monitoring
 module "cloudwatch" {
   source = "./modules/cloudwatch"
 
-  project_name                = var.project_name
-  environment                 = var.environment
+  project_name  = var.project_name
+  environment   = var.environment
+  sns_topic_arn = var.guardduty_enabled ? module.security_monitoring.sns_topic_arn : null
+
+  depends_on = [module.security_monitoring]
+}
+
+# 9. WAF MODULE - Web Application Firewall with CloudFront
+module "waf" {
+  source = "./modules/waf"
+
+  providers = {
+    aws = aws.us_east_1
+  }
+
+  project_name            = var.project_name
+  environment             = var.environment
+  enabled                 = var.waf_enabled
+  api_gateway_endpoint    = module.api_gateway.api_endpoint_raw
+  api_gateway_stage_name  = var.api_stage_name
+  rate_limit_per_ip       = var.waf_rate_limit_per_ip
+  frontend_origin         = var.frontend_origin
+  enable_logging          = var.waf_enable_logging
+  log_retention_days      = var.waf_log_retention_days
+
+  depends_on = [module.api_gateway]
 }

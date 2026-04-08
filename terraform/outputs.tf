@@ -76,3 +76,43 @@ output "frontend_env_variables" {
   }
   sensitive = false
 }
+
+# WAF & CloudFront outputs
+output "waf_web_acl_name" {
+  description = "WAF Web ACL name protecting the API"
+  value       = module.waf.web_acl_name
+  sensitive   = false
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (WAF-protected API layer)"
+  value       = module.waf.cloudfront_distribution_id
+  sensitive   = false
+}
+
+output "cloudfront_api_endpoint" {
+  description = "WAF-protected API endpoint via CloudFront (use this instead of direct API Gateway URL)"
+  value       = module.waf.cloudfront_api_endpoint
+  sensitive   = false
+}
+
+output "waf_protected_frontend_env" {
+  description = "Frontend env using WAF-protected endpoint (recommended for production)"
+  value = {
+    VITE_API_URL             = module.waf.cloudfront_api_endpoint
+    VITE_COGNITO_USER_POOL_ID = module.cognito.user_pool_id
+    VITE_COGNITO_CLIENT_ID    = module.cognito.client_id
+  }
+  sensitive = false
+}
+
+# Security monitoring outputs
+output "guardduty_detector_id" {
+  value     = module.security_monitoring.guardduty_detector_id
+  sensitive = false
+}
+
+output "security_alerts_sns_topic" {
+  value     = module.security_monitoring.sns_topic_arn
+  sensitive = false
+}

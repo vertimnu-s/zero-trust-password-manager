@@ -92,3 +92,40 @@ variable "additional_tags" {
   type        = map(string)
   default     = {}
 }
+
+# WAF variables
+variable "waf_enabled" {
+  description = "Toggle WAF + CloudFront on/off"
+  type        = bool
+  default     = true
+}
+
+variable "waf_rate_limit_per_ip" {
+  description = "Maximum requests per 5-minute window per IP address"
+  type        = number
+  default     = 2000
+}
+
+variable "waf_enable_logging" {
+  description = "Enable WAF request logging to CloudWatch"
+  type        = bool
+  default     = true
+}
+
+variable "waf_log_retention_days" {
+  description = "Number of days to retain WAF logs in CloudWatch"
+  type        = number
+  default     = 30
+}
+
+# Security monitoring variables
+variable "guardduty_enabled" {
+  description = "Toggle GuardDuty threat detection on/off"
+  type        = bool
+  default     = true
+}
+
+variable "security_alert_email" {
+  description = "Email address for security alerts (GuardDuty, alarms)"
+  type        = string
+}
