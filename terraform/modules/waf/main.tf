@@ -165,7 +165,46 @@ resource "aws_wafv2_web_acl" "api_protection" {
   }
 }
 
-# CloudFront distribution — WAF attachment point + Shield Standard DDoS protection
+resource "aws_cloudfront_response_headers_policy" "security_headers" {
+  count = var.enabled ? 1 : 0
+  name  = "${var.project_name}-security-headers-${var.environment}"
+
+  security_headers_config {
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      override                   = true
+    }
+
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "DENY"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+  }
+
+  custom_headers_config {
+    items {
+      header   = "Permissions-Policy"
+      value    = "camera=(), microphone=(), geolocation=()"
+      override = true
+    }
+    items {
+      header   = "Cache-Control"
+      value    = "no-store"
+      override = true
+    }
+  }
+}
+
 resource "aws_cloudfront_distribution" "api_distribution" {
   count = var.enabled ? 1 : 0
 
@@ -189,9 +228,10 @@ resource "aws_cloudfront_distribution" "api_distribution" {
   }
 
   default_cache_behavior {
-    allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
-    cached_methods   = ["GET", "HEAD", "OPTIONS"]
-    target_origin_id = "api-gateway"
+    allowed_methods            = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
+    cached_methods             = ["GET", "HEAD", "OPTIONS"]
+    target_origin_id           = "api-gateway"
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.security_headers[0].id
 
     forwarded_values {
       query_string = true

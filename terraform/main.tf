@@ -1,6 +1,12 @@
 # Root Module - This orchestrates all infrastructure components
 # Each module represents a major AWS service
 
+locals {
+  waf_enabled        = var.waf_enabled != null ? var.waf_enabled : var.enable_paid_security
+  guardduty_enabled  = var.guardduty_enabled != null ? var.guardduty_enabled : var.enable_paid_security
+  cloudtrail_enabled = var.cloudtrail_enabled != null ? var.cloudtrail_enabled : var.enable_paid_security
+}
+
 # 1. COGNITO MODULE - User authentication & authorization
 module "cognito" {
   source = "./modules/cognito"
@@ -124,7 +130,7 @@ module "security_monitoring" {
 
   project_name = var.project_name
   environment  = var.environment
-  enabled      = var.guardduty_enabled
+  enabled      = local.guardduty_enabled
   alert_email  = var.security_alert_email
 }
 
@@ -134,7 +140,7 @@ module "cloudwatch" {
 
   project_name  = var.project_name
   environment   = var.environment
-  sns_topic_arn = var.guardduty_enabled ? module.security_monitoring.sns_topic_arn : null
+  sns_topic_arn = local.guardduty_enabled ? module.security_monitoring.sns_topic_arn : null
 
   depends_on = [module.security_monitoring]
 }
@@ -149,7 +155,7 @@ module "waf" {
 
   project_name            = var.project_name
   environment             = var.environment
-  enabled                 = var.waf_enabled
+  enabled                 = local.waf_enabled
   api_gateway_endpoint    = module.api_gateway.api_endpoint_raw
   api_gateway_stage_name  = var.api_stage_name
   rate_limit_per_ip       = var.waf_rate_limit_per_ip
@@ -158,4 +164,14 @@ module "waf" {
   log_retention_days      = var.waf_log_retention_days
 
   depends_on = [module.api_gateway]
+}
+
+# 10. CLOUDTRAIL — records all AWS API calls for audit and forensics
+module "cloudtrail" {
+  source = "./modules/cloudtrail"
+
+  project_name          = var.project_name
+  environment           = var.environment
+  enabled               = local.cloudtrail_enabled
+  s3_log_retention_days = 90
 }

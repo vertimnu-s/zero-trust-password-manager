@@ -116,3 +116,8 @@ output "security_alerts_sns_topic" {
   value     = module.security_monitoring.sns_topic_arn
   sensitive = false
 }
+
+output "cloudtrail_s3_bucket" {
+  value     = module.cloudtrail.trail_s3_bucket
+  sensitive = false
+}

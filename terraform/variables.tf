@@ -93,11 +93,20 @@ variable "additional_tags" {
   default     = {}
 }
 
-# WAF variables
-variable "waf_enabled" {
-  description = "Toggle WAF + CloudFront on/off"
+# ========== PAID SECURITY SERVICES ==========
+# Master toggle — set to false to disable ALL paid security services at once.
+# Individual toggles below override this if you need finer control.
+variable "enable_paid_security" {
+  description = "Master toggle for all paid security services (WAF, GuardDuty, CloudTrail)"
   type        = bool
   default     = true
+}
+
+# WAF variables
+variable "waf_enabled" {
+  description = "Toggle WAF + CloudFront on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
 }
 
 variable "waf_rate_limit_per_ip" {
@@ -120,9 +129,15 @@ variable "waf_log_retention_days" {
 
 # Security monitoring variables
 variable "guardduty_enabled" {
-  description = "Toggle GuardDuty threat detection on/off"
+  description = "Toggle GuardDuty threat detection on/off (defaults to master toggle)"
   type        = bool
-  default     = true
+  default     = null
+}
+
+variable "cloudtrail_enabled" {
+  description = "Toggle CloudTrail audit logging on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
 }
 
 variable "security_alert_email" {
