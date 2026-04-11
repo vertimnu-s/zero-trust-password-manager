@@ -1,6 +1,6 @@
 .page {
   padding: var(--space-2xl) var(--space-2xl) var(--space-2xl) var(--space-2xl);
-  max-width: 1200px;
+  max-width: 1600px;
   width: 100%;
 }
 
@@ -541,4 +541,38 @@
   gap: var(--space-xs);
   font-size: var(--font-size-sm);
   color: var(--color-success);
+}
+
+/* ========== Textarea (Secure Notes, Identity Address) ========== */
+.textareaLabel {
+  display: block;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-xs);
+}
+
+.textarea {
+  width: 100%;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.textarea:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+/* ========== Item Category Icon ========== */
+.itemCategoryIcon {
+  color: var(--color-text-muted);
+  flex-shrink: 0;
 }

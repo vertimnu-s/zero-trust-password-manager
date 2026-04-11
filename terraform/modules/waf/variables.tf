@@ -40,3 +40,9 @@ variable "log_retention_days" {
   type    = number
   default = 30
 }
+
+variable "blocked_ip_set_arn" {
+  description = "ARN of the WAF IP set for dynamically blocked IPs (from incident response)"
+  type        = string
+  default     = null
+}

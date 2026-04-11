@@ -218,3 +218,30 @@ export const refreshSession = (): Promise<string> => {
     });
   });
 };
+
+export const deleteAccount = (): Promise<void> => {
+  return new Promise((resolve, reject) => {
+    const cognitoUser = userPool.getCurrentUser();
+    if (!cognitoUser) {
+      reject(new Error("No user session found."));
+      return;
+    }
+
+    cognitoUser.getSession((err: Error | null) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+
+      cognitoUser.deleteUser((err) => {
+        if (err) {
+          reject(err);
+          return;
+        }
+        localStorage.removeItem("idToken");
+        localStorage.removeItem("refreshToken");
+        resolve();
+      });
+    });
+  });
+};

@@ -80,7 +80,7 @@ variable "frontend_origin" {
 variable "reserved_concurrency" {
   description = "Maximum concurrent executions per Lambda function (0 = disabled, -1 = unreserved)"
   type        = number
-  default     = 10
+  default     = -1
 }
 
 variable "dlq_arns" {

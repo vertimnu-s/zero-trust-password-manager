@@ -44,3 +44,21 @@
 .form > :last-child {
   grid-column: 1 / -1;
 }
+
+.deleteConfirm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.deleteWarning {
+  font-size: var(--font-size-sm);
+  color: var(--color-danger);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.deleteActions {
+  display: flex;
+  gap: var(--space-sm);
+}
