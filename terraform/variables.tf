@@ -146,6 +146,12 @@ variable "kms_enabled" {
   default     = null
 }
 
+variable "compliance_enabled" {
+  description = "Toggle Security Hub + AWS Config on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
+}
+
 variable "security_alert_email" {
   description = "Email address for security alerts (GuardDuty, alarms)"
   type        = string

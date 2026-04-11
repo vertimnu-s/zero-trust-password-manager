@@ -76,3 +76,15 @@ variable "frontend_origin" {
   description = "Frontend origin for CORS headers"
   type        = string
 }
+
+variable "reserved_concurrency" {
+  description = "Maximum concurrent executions per Lambda function (0 = disabled, -1 = unreserved)"
+  type        = number
+  default     = 10
+}
+
+variable "dlq_arns" {
+  description = "Map of function key to DLQ ARN"
+  type        = map(string)
+  default     = {}
+}

@@ -1,7 +1,6 @@
 # CloudWatch Module - CloudWatch Log Groups for Lambda functions
 
 # Log group for CREATE PASSWORD Lambda
-# Note: Free tier includes 10GB ingestion/month. At 7-day retention, this is very comfortable.
 resource "aws_cloudwatch_log_group" "create_password" {
   name              = "/aws/lambda/${var.project_name}-create-password-${var.environment}"
   retention_in_days = var.log_retention_days  # Default: 7 days (free tier optimized)

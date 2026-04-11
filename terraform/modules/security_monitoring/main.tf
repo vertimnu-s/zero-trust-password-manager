@@ -1,6 +1,4 @@
 # GuardDuty — continuously monitors for threats across the AWS account.
-# Analyzes CloudTrail events, VPC flow logs, and DNS queries to detect
-# compromised credentials, unusual API activity, and reconnaissance.
 
 resource "aws_guardduty_detector" "main" {
   count = var.enabled ? 1 : 0

@@ -255,3 +255,22 @@ resource "aws_iam_role_policy" "kms_access" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "dlq_send" {
+  for_each = var.dlq_arns
+
+  name = "${var.project_name}-dlq-send-${each.key}"
+  role = local.all_lambda_roles[index(["create", "read", "update", "delete"], each.key)]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "SQSSendMessage"
+        Effect   = "Allow"
+        Action   = "sqs:SendMessage"
+        Resource = each.value
+      }
+    ]
+  })
+}

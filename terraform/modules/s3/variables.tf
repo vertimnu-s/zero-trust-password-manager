@@ -17,9 +17,9 @@ variable "enable_versioning" {
 }
 
 variable "audit_logs_retention_days" {
-  description = "Number of days to retain audit logs before archiving"
+  description = "Number of days to retain audit logs before deletion"
   type        = number
-  default     = 90
+  default     = 365
 }
 
 variable "archive_to_glacier_days" {

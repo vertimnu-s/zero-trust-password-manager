@@ -3,10 +3,12 @@ import LoginPage from "./pages/LoginPage";
 import VaultPage from "./pages/VaultPage";
 import ProfilePage from "./pages/ProfilePage";
 import Layout from "./components/layout/Layout";
+import { logoutUser, refreshSession } from "./services/cognito";
 
 export type Page = 'vault' | 'profile';
 
 const INACTIVITY_TIMEOUT_MS = 15 * 60 * 1000;
+const TOKEN_REFRESH_INTERVAL_MS = 45 * 60 * 1000;
 
 function getTokenExpiry(token: string): number | null {
   try {
@@ -23,7 +25,9 @@ function App() {
   const lastActivityRef = useRef<number>(0);
 
   const handleLogout = useCallback(() => {
+    logoutUser().catch(() => {});
     localStorage.removeItem("idToken");
+    localStorage.removeItem("refreshToken");
     setLoggedIn(false);
     setCurrentPage('vault');
   }, []);
@@ -35,7 +39,7 @@ function App() {
   useEffect(() => {
     if (!loggedIn) return;
 
-    const checkToken = () => {
+    const checkToken = async () => {
       const token = localStorage.getItem("idToken");
       if (!token) {
         handleLogout();
@@ -43,12 +47,32 @@ function App() {
       }
       const expiry = getTokenExpiry(token);
       if (expiry && Date.now() >= expiry) {
-        handleLogout();
+        try {
+          await refreshSession();
+        } catch {
+          handleLogout();
+        }
       }
     };
 
     checkToken();
     const interval = setInterval(checkToken, 30000);
+    return () => clearInterval(interval);
+  }, [loggedIn, handleLogout]);
+
+  useEffect(() => {
+    if (!loggedIn) return;
+
+    const doRefresh = async () => {
+      try {
+        const newToken = await refreshSession();
+        localStorage.setItem("idToken", newToken);
+      } catch {
+        handleLogout();
+      }
+    };
+
+    const interval = setInterval(doRefresh, TOKEN_REFRESH_INTERVAL_MS);
     return () => clearInterval(interval);
   }, [loggedIn, handleLogout]);
 
