@@ -19,12 +19,9 @@ resource "aws_dynamodb_table" "password_vault" {
     type = "S"  # String
   }
 
-  # ENCRYPTION AT REST - AWS managed keys by default
-  # Data is encrypted when written to disk
   server_side_encryption {
     enabled     = var.enable_encryption
-    kms_key_arn = null  # Uses AWS managed key (sufficient for dissertation)
-    # To use customer-managed KMS key: kms_key_arn = aws_kms_key.dynamodb.arn
+    kms_key_arn = var.kms_key_arn
   }
 
   # POINT-IN-TIME RECOVERY - Critical for a password manager!

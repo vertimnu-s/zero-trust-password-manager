@@ -5,6 +5,7 @@ locals {
   waf_enabled        = var.waf_enabled != null ? var.waf_enabled : var.enable_paid_security
   guardduty_enabled  = var.guardduty_enabled != null ? var.guardduty_enabled : var.enable_paid_security
   cloudtrail_enabled = var.cloudtrail_enabled != null ? var.cloudtrail_enabled : var.enable_paid_security
+  kms_enabled        = var.kms_enabled != null ? var.kms_enabled : var.enable_paid_security
 }
 
 # 1. COGNITO MODULE - User authentication & authorization
@@ -29,6 +30,7 @@ module "dynamodb" {
   environment                 = var.environment
   billing_mode                = var.dynamodb_billing_mode
   point_in_time_recovery      = var.enable_point_in_time_recovery
+  kms_key_arn                 = module.kms.dynamodb_key_arn
 }
 
 # 3. IAM MODULE - Least-privilege policies for Lambda functions
@@ -40,9 +42,18 @@ module "iam" {
   dynamodb_table_arn          = module.dynamodb.table_arn
   dynamodb_table_name         = module.dynamodb.table_name
   s3_audit_logs_bucket_arn    = module.s3.audit_logs_bucket_arn
+  kms_key_arns                = local.kms_enabled ? [module.kms.dynamodb_key_arn, module.kms.s3_key_arn] : []
   
-  # Depends on S3 being created first
   depends_on = [module.s3]
+}
+
+# 3b. KMS MODULE - Customer-managed encryption keys for DynamoDB and S3
+module "kms" {
+  source = "./modules/kms"
+
+  project_name = var.project_name
+  environment  = var.environment
+  enabled      = local.kms_enabled
 }
 
 # 4. S3 MODULE - Audit logs storage with lifecycle policies
@@ -53,6 +64,7 @@ module "s3" {
   environment                 = var.environment
   enable_versioning           = var.s3_enable_versioning
   audit_logs_retention_days   = var.s3_audit_logs_retention_days
+  kms_key_arn                 = module.kms.s3_key_arn
 }
 
 # 5. LAMBDA MODULE - 4 functions for CRUD operations (with bug fixes)

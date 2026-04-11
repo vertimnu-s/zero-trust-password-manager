@@ -27,3 +27,9 @@ variable "archive_to_glacier_days" {
   type        = number
   default     = 30
 }
+
+variable "kms_key_arn" {
+  description = "KMS CMK ARN for server-side encryption (null = AES256)"
+  type        = string
+  default     = null
+}

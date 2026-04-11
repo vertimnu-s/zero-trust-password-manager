@@ -42,14 +42,15 @@ resource "aws_s3_bucket_public_access_block" "audit_logs" {
   restrict_public_buckets = true
 }
 
-# Enable encryption at rest using AWS managed keys
 resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = var.kms_key_arn != null ? "aws:kms" : "AES256"
+      kms_master_key_id = var.kms_key_arn
     }
+    bucket_key_enabled = var.kms_key_arn != null ? true : false
   }
 }
 

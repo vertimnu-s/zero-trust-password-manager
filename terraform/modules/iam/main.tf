@@ -221,3 +221,37 @@ resource "aws_iam_role_policy_attachment" "delete_lambda_basic_execution" {
   role       = aws_iam_role.delete_password_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }
+
+locals {
+  kms_enabled = length(var.kms_key_arns) > 0
+  all_lambda_roles = [
+    aws_iam_role.create_password_role.name,
+    aws_iam_role.read_passwords_role.name,
+    aws_iam_role.update_password_role.name,
+    aws_iam_role.delete_password_role.name,
+  ]
+}
+
+resource "aws_iam_role_policy" "kms_access" {
+  count = local.kms_enabled ? length(local.all_lambda_roles) : 0
+
+  name = "${var.project_name}-kms-access"
+  role = local.all_lambda_roles[count.index]
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "KMSAccess"
+        Effect = "Allow"
+        Action = [
+          "kms:Decrypt",
+          "kms:DescribeKey",
+          "kms:GenerateDataKey",
+          "kms:GenerateDataKey*"
+        ]
+        Resource = var.kms_key_arns
+      }
+    ]
+  })
+}

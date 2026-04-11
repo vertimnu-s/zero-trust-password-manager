@@ -140,6 +140,12 @@ variable "cloudtrail_enabled" {
   default     = null
 }
 
+variable "kms_enabled" {
+  description = "Toggle KMS customer-managed keys on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
+}
+
 variable "security_alert_email" {
   description = "Email address for security alerts (GuardDuty, alarms)"
   type        = string

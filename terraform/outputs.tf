@@ -121,3 +121,13 @@ output "cloudtrail_s3_bucket" {
   value     = module.cloudtrail.trail_s3_bucket
   sensitive = false
 }
+
+output "kms_dynamodb_key_id" {
+  value     = module.kms.dynamodb_key_id
+  sensitive = false
+}
+
+output "kms_s3_key_id" {
+  value     = module.kms.s3_key_id
+  sensitive = false
+}

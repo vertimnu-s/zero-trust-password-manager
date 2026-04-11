@@ -24,3 +24,9 @@ variable "s3_audit_logs_bucket_arn" {
   description = "ARN of the S3 bucket for audit logs"
   type        = string
 }
+
+variable "kms_key_arns" {
+  description = "List of KMS CMK ARNs the Lambda roles need access to (empty = no KMS permissions)"
+  type        = list(string)
+  default     = []
+}
