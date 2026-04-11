@@ -30,3 +30,9 @@ variable "kms_key_arns" {
   type        = list(string)
   default     = []
 }
+
+variable "dlq_arns" {
+  description = "Map of function name to SQS DLQ ARN (empty = no DLQ permissions)"
+  type        = map(string)
+  default     = {}
+}

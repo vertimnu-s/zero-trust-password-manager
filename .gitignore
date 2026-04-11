@@ -102,15 +102,7 @@ Thumbs.db
 # ============================================
 # LOCAL DOCUMENTATION (NOT in repo)
 # ============================================
-# Keep these files locally only - not pushed to GitHub:
-AWS_FREE_TIER_OPTIMIZATION.md
-COST_SUMMARY.md
-FREE_TIER_OPTIMIZATION_COMPLETE.md
-PRE_DEPLOYMENT_CHECKLIST.md
-QUICK_START_SUMMARY.md
-TERRAFORM_IMPLEMENTATION.md
-IMPLEMENTATION_COMPLETE.md
-dissertation-structure.md
+docs/
 
 # ============================================
 # KEEP THESE IN REPO (documentation & templates)

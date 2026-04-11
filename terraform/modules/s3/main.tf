@@ -72,6 +72,18 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
       noncurrent_days = 7
     }
   }
+
+  rule {
+    id     = "archive-to-glacier"
+    status = var.archive_to_glacier_days < var.audit_logs_retention_days ? "Enabled" : "Disabled"
+
+    filter {}
+
+    transition {
+      days          = var.archive_to_glacier_days
+      storage_class = "GLACIER"
+    }
+  }
 }
 
 # Enable logging for the bucket itself (meta-log)
@@ -120,6 +132,21 @@ resource "aws_s3_bucket_policy" "audit_logs" {
         }
         Action   = ["s3:PutObject"]
         Resource = "${aws_s3_bucket.audit_logs.arn}/audit-logs/*"
+      },
+      {
+        Sid       = "DenyAuditLogDeletion"
+        Effect    = "Deny"
+        Principal = "*"
+        Action = [
+          "s3:DeleteObject",
+          "s3:DeleteObjectVersion"
+        ]
+        Resource = "${aws_s3_bucket.audit_logs.arn}/audit-logs/*"
+        Condition = {
+          StringNotEquals = {
+            "aws:PrincipalAccount" = ""
+          }
+        }
       }
     ]
   })

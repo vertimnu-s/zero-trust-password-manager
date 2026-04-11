@@ -131,3 +131,18 @@ output "kms_s3_key_id" {
   value     = module.kms.s3_key_id
   sensitive = false
 }
+
+output "security_hub_id" {
+  value     = module.compliance.security_hub_id
+  sensitive = false
+}
+
+output "config_recorder_id" {
+  value     = module.compliance.config_recorder_id
+  sensitive = false
+}
+
+output "access_analyzer_arn" {
+  value     = module.access_analyzer.analyzer_arn
+  sensitive = false
+}
