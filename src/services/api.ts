@@ -128,5 +128,6 @@ export const deletePassword = async (site: string, username: string) => {
 
 function handleUnauthorized() {
   localStorage.removeItem("idToken");
+  localStorage.removeItem("refreshToken");
   window.location.reload();
 }

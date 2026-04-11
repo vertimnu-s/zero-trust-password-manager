@@ -32,6 +32,13 @@ lambda_memory_mb       = 256    # 256MB is minimum; perfect for password manager
 s3_enable_versioning          = false              # ⚠️ DISABLED for free tier (saves storage)
 s3_audit_logs_retention_days  = 30                 # ⚠️ REDUCED from 90 days (saves storage)
 
+# ========== PAID SECURITY SERVICES ==========
+# Flip this ONE variable to enable/disable ALL paid services (WAF, GuardDuty, CloudTrail).
+# Cost when enabled: ~$12/month. Set to false when not testing to save credits.
+enable_paid_security = true
+
+security_alert_email   = "aververaki@athtech.gr"
+
 # Additional tags for cost tracking
 additional_tags = {
   CostCenter          = "Education"

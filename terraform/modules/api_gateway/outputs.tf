@@ -10,6 +10,11 @@ output "api_endpoint" {
   value       = "${aws_apigatewayv2_api.password_manager.api_endpoint}/${aws_apigatewayv2_stage.default.name}"
 }
 
+output "api_endpoint_raw" {
+  description = "API Gateway HTTP API endpoint URL without stage path (for CloudFront origin)"
+  value       = aws_apigatewayv2_api.password_manager.api_endpoint
+}
+
 output "api_endpoint_protocol" {
   description = "API Gateway execution protocol"
   value       = aws_apigatewayv2_api.password_manager.protocol_type

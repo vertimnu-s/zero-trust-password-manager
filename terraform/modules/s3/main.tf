@@ -42,14 +42,15 @@ resource "aws_s3_bucket_public_access_block" "audit_logs" {
   restrict_public_buckets = true
 }
 
-# Enable encryption at rest using AWS managed keys
 resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
   rule {
     apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
+      sse_algorithm     = var.kms_key_arn != null ? "aws:kms" : "AES256"
+      kms_master_key_id = var.kms_key_arn
     }
+    bucket_key_enabled = var.kms_key_arn != null ? true : false
   }
 }
 
@@ -69,6 +70,18 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
 
     noncurrent_version_expiration {
       noncurrent_days = 7
+    }
+  }
+
+  rule {
+    id     = "archive-to-glacier"
+    status = var.archive_to_glacier_days < var.audit_logs_retention_days ? "Enabled" : "Disabled"
+
+    filter {}
+
+    transition {
+      days          = var.archive_to_glacier_days
+      storage_class = "GLACIER"
     }
   }
 }
@@ -119,6 +132,21 @@ resource "aws_s3_bucket_policy" "audit_logs" {
         }
         Action   = ["s3:PutObject"]
         Resource = "${aws_s3_bucket.audit_logs.arn}/audit-logs/*"
+      },
+      {
+        Sid       = "DenyAuditLogDeletion"
+        Effect    = "Deny"
+        Principal = "*"
+        Action = [
+          "s3:DeleteObject",
+          "s3:DeleteObjectVersion"
+        ]
+        Resource = "${aws_s3_bucket.audit_logs.arn}/audit-logs/*"
+        Condition = {
+          StringNotEquals = {
+            "aws:PrincipalAccount" = ""
+          }
+        }
       }
     ]
   })

@@ -33,6 +33,12 @@ variable "enable_encryption" {
   default     = true
 }
 
+variable "kms_key_arn" {
+  description = "KMS CMK ARN for server-side encryption (null = AWS managed key)"
+  type        = string
+  default     = null
+}
+
 variable "enable_stream" {
   description = "Enable DynamoDB Streams for capturing changes"
   type        = bool

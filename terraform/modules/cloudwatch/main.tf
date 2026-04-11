@@ -1,7 +1,6 @@
 # CloudWatch Module - CloudWatch Log Groups for Lambda functions
 
 # Log group for CREATE PASSWORD Lambda
-# Note: Free tier includes 10GB ingestion/month. At 7-day retention, this is very comfortable.
 resource "aws_cloudwatch_log_group" "create_password" {
   name              = "/aws/lambda/${var.project_name}-create-password-${var.environment}"
   retention_in_days = var.log_retention_days  # Default: 7 days (free tier optimized)
@@ -67,6 +66,7 @@ resource "aws_cloudwatch_metric_alarm" "create_password_errors" {
   statistic           = "Sum"
   threshold           = 1
   alarm_description   = "Alert when CREATE password Lambda has errors"
+  alarm_actions       = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
 
   dimensions = {
     FunctionName = "${var.project_name}-create-password-${var.environment}"
@@ -83,6 +83,7 @@ resource "aws_cloudwatch_metric_alarm" "read_passwords_errors" {
   statistic           = "Sum"
   threshold           = 1
   alarm_description   = "Alert when READ passwords Lambda has errors"
+  alarm_actions       = var.sns_topic_arn != null ? [var.sns_topic_arn] : []
 
   dimensions = {
     FunctionName = "${var.project_name}-read-passwords-${var.environment}"

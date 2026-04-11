@@ -39,5 +39,3 @@ output "delete_password_function_name" {
   description = "Name of delete password Lambda function"
   value       = aws_lambda_function.delete_password.function_name
 }
-
-

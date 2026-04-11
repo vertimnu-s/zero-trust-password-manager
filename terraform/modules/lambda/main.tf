@@ -40,6 +40,15 @@ resource "aws_lambda_function" "create_password" {
   
   timeout     = var.timeout_seconds
   memory_size = var.memory_mb
+
+  reserved_concurrent_executions = var.reserved_concurrency
+
+  dynamic "dead_letter_config" {
+    for_each = lookup(var.dlq_arns, "create", null) != null ? [1] : []
+    content {
+      target_arn = var.dlq_arns["create"]
+    }
+  }
   
   logging_config {
     log_group            = var.create_log_group_name
@@ -72,6 +81,15 @@ resource "aws_lambda_function" "read_passwords" {
   
   timeout     = var.timeout_seconds
   memory_size = var.memory_mb
+
+  reserved_concurrent_executions = var.reserved_concurrency
+
+  dynamic "dead_letter_config" {
+    for_each = lookup(var.dlq_arns, "read", null) != null ? [1] : []
+    content {
+      target_arn = var.dlq_arns["read"]
+    }
+  }
   
   logging_config {
     log_group  = var.read_log_group_name
@@ -104,6 +122,15 @@ resource "aws_lambda_function" "update_password" {
   
   timeout     = var.timeout_seconds
   memory_size = var.memory_mb
+
+  reserved_concurrent_executions = var.reserved_concurrency
+
+  dynamic "dead_letter_config" {
+    for_each = lookup(var.dlq_arns, "update", null) != null ? [1] : []
+    content {
+      target_arn = var.dlq_arns["update"]
+    }
+  }
   
   logging_config {
     log_group  = var.update_log_group_name
@@ -136,6 +163,15 @@ resource "aws_lambda_function" "delete_password" {
   
   timeout     = var.timeout_seconds
   memory_size = var.memory_mb
+
+  reserved_concurrent_executions = var.reserved_concurrency
+
+  dynamic "dead_letter_config" {
+    for_each = lookup(var.dlq_arns, "delete", null) != null ? [1] : []
+    content {
+      target_arn = var.dlq_arns["delete"]
+    }
+  }
   
   logging_config {
     log_group  = var.delete_log_group_name

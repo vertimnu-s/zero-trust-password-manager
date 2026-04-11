@@ -92,3 +92,67 @@ variable "additional_tags" {
   type        = map(string)
   default     = {}
 }
+
+# ========== PAID SECURITY SERVICES ==========
+# Master toggle — set to false to disable ALL paid security services at once.
+# Individual toggles below override this if you need finer control.
+variable "enable_paid_security" {
+  description = "Master toggle for all paid security services (WAF, GuardDuty, CloudTrail)"
+  type        = bool
+  default     = true
+}
+
+# WAF variables
+variable "waf_enabled" {
+  description = "Toggle WAF + CloudFront on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
+}
+
+variable "waf_rate_limit_per_ip" {
+  description = "Maximum requests per 5-minute window per IP address"
+  type        = number
+  default     = 2000
+}
+
+variable "waf_enable_logging" {
+  description = "Enable WAF request logging to CloudWatch"
+  type        = bool
+  default     = true
+}
+
+variable "waf_log_retention_days" {
+  description = "Number of days to retain WAF logs in CloudWatch"
+  type        = number
+  default     = 30
+}
+
+# Security monitoring variables
+variable "guardduty_enabled" {
+  description = "Toggle GuardDuty threat detection on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
+}
+
+variable "cloudtrail_enabled" {
+  description = "Toggle CloudTrail audit logging on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
+}
+
+variable "kms_enabled" {
+  description = "Toggle KMS customer-managed keys on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
+}
+
+variable "compliance_enabled" {
+  description = "Toggle Security Hub + AWS Config on/off (defaults to master toggle)"
+  type        = bool
+  default     = null
+}
+
+variable "security_alert_email" {
+  description = "Email address for security alerts (GuardDuty, alarms)"
+  type        = string
+}

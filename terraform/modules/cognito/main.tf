@@ -117,6 +117,8 @@ resource "aws_cognito_user_pool_client" "frontend" {
   # Prevent users from using the same password twice (if implemented)
   prevent_user_existence_errors = "ENABLED"
 
+  enable_token_revocation = true
+
   # Passkeys support (WebAuthn)
   supported_identity_providers = ["COGNITO"]
 

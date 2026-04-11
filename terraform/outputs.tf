@@ -76,3 +76,73 @@ output "frontend_env_variables" {
   }
   sensitive = false
 }
+
+# WAF & CloudFront outputs
+output "waf_web_acl_name" {
+  description = "WAF Web ACL name protecting the API"
+  value       = module.waf.web_acl_name
+  sensitive   = false
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (WAF-protected API layer)"
+  value       = module.waf.cloudfront_distribution_id
+  sensitive   = false
+}
+
+output "cloudfront_api_endpoint" {
+  description = "WAF-protected API endpoint via CloudFront (use this instead of direct API Gateway URL)"
+  value       = module.waf.cloudfront_api_endpoint
+  sensitive   = false
+}
+
+output "waf_protected_frontend_env" {
+  description = "Frontend env using WAF-protected endpoint (recommended for production)"
+  value = {
+    VITE_API_URL             = module.waf.cloudfront_api_endpoint
+    VITE_COGNITO_USER_POOL_ID = module.cognito.user_pool_id
+    VITE_COGNITO_CLIENT_ID    = module.cognito.client_id
+  }
+  sensitive = false
+}
+
+# Security monitoring outputs
+output "guardduty_detector_id" {
+  value     = module.security_monitoring.guardduty_detector_id
+  sensitive = false
+}
+
+output "security_alerts_sns_topic" {
+  value     = module.security_monitoring.sns_topic_arn
+  sensitive = false
+}
+
+output "cloudtrail_s3_bucket" {
+  value     = module.cloudtrail.trail_s3_bucket
+  sensitive = false
+}
+
+output "kms_dynamodb_key_id" {
+  value     = module.kms.dynamodb_key_id
+  sensitive = false
+}
+
+output "kms_s3_key_id" {
+  value     = module.kms.s3_key_id
+  sensitive = false
+}
+
+output "security_hub_id" {
+  value     = module.compliance.security_hub_id
+  sensitive = false
+}
+
+output "config_recorder_id" {
+  value     = module.compliance.config_recorder_id
+  sensitive = false
+}
+
+output "access_analyzer_arn" {
+  value     = module.access_analyzer.analyzer_arn
+  sensitive = false
+}

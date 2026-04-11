@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useToast } from '../components/ui/useToast';
-import { changePassword } from '../services/cognito';
+import { changePassword, globalSignOutUser } from '../services/cognito';
 import { validatePassword } from '../utils/passwordValidator';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PasswordStrength from '../components/ui/PasswordStrength';
-import { Lock } from 'lucide-react';
+import { Lock, LogOut } from 'lucide-react';
 import styles from './ProfilePage.module.css';
 
 export default function ProfilePage() {
@@ -15,6 +15,23 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+
+  const handleSignOutEverywhere = async () => {
+    setSigningOut(true);
+    try {
+      await globalSignOutUser();
+      addToast('Signed out from all devices. Please log in again.', 'success');
+      localStorage.removeItem('idToken');
+      localStorage.removeItem('refreshToken');
+      window.location.reload();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      addToast(`Failed to sign out everywhere: ${message}`, 'error');
+    } finally {
+      setSigningOut(false);
+    }
+  };
 
   const handleChangePassword = async () => {
     if (!currentPassword || !newPassword || !confirmPassword) {
@@ -87,6 +104,19 @@ export default function ProfilePage() {
             Change Password
           </Button>
         </div>
+      </Card>
+
+      <Card className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <LogOut size={20} />
+          <h2>Session Management</h2>
+        </div>
+        <p className={styles.description}>
+          Revoke all active sessions across every device. You will need to log in again everywhere.
+        </p>
+        <Button onClick={handleSignOutEverywhere} loading={signingOut} variant="danger" fullWidth>
+          Sign Out Everywhere
+        </Button>
       </Card>
     </div>
   );
