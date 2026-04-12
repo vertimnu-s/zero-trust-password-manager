@@ -182,8 +182,8 @@ export function generateSecurePassword(options: {
   }
 
   const requiredChars: string[] = [];
-  Object.entries(charSets).forEach(([key, chars]) => {
-    if (chars && options[key as keyof typeof options]) {
+  Object.entries(charSets).forEach(([, chars]) => {
+    if (chars) {
       requiredChars.push(chars[secureRandomIndex(chars.length)]);
     }
   });
