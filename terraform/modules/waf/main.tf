@@ -120,6 +120,36 @@ resource "aws_wafv2_web_acl" "api_protection" {
     }
   }
 
+  # Incident response IP blocklist — highest priority, blocks IPs added by automated remediation
+  dynamic "rule" {
+    for_each = var.blocked_ip_set_arn != null ? [1] : []
+    content {
+      name     = "incident-response-blocked-ips"
+      priority = 0
+
+      action {
+        block {
+          custom_response {
+            response_code            = 403
+            custom_response_body_key = "blocked-ip"
+          }
+        }
+      }
+
+      statement {
+        ip_set_reference_statement {
+          arn = var.blocked_ip_set_arn
+        }
+      }
+
+      visibility_config {
+        cloudwatch_metrics_enabled = true
+        metric_name                = "${var.project_name}-blocked-ips"
+        sampled_requests_enabled   = true
+      }
+    }
+  }
+
   # Per-IP rate limiting — blocks IPs exceeding threshold in a 5-min window
   rule {
     name     = "rate-limit-per-ip"
@@ -151,6 +181,12 @@ resource "aws_wafv2_web_acl" "api_protection" {
   custom_response_body {
     key          = "rate-limited"
     content      = "{\"error\": \"Too many requests. Please try again later.\"}"
+    content_type = "APPLICATION_JSON"
+  }
+
+  custom_response_body {
+    key          = "blocked-ip"
+    content      = "{\"error\": \"Access denied.\"}"
     content_type = "APPLICATION_JSON"
   }
 

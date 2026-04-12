@@ -189,6 +189,7 @@ module "waf" {
   frontend_origin         = var.frontend_origin
   enable_logging          = var.waf_enable_logging
   log_retention_days      = var.waf_log_retention_days
+  blocked_ip_set_arn      = (local.guardduty_enabled && local.waf_enabled) ? module.incident_response.waf_ip_set_arn : null
 
   depends_on = [module.api_gateway]
 }
@@ -224,4 +225,25 @@ module "access_analyzer" {
   project_name = var.project_name
   environment  = var.environment
   enabled      = true
+}
+
+# 13. INCIDENT RESPONSE — automated remediation for GuardDuty findings.
+# Blocks attacker IPs via WAF IP set and disables compromised Cognito users.
+# Cost: $0 — Lambda free tier, WAF IP set included, EventBridge free.
+module "incident_response" {
+  source = "./modules/incident_response"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  project_name          = var.project_name
+  environment           = var.environment
+  enabled               = local.guardduty_enabled && local.waf_enabled
+  cognito_user_pool_id  = module.cognito.user_pool_id
+  cognito_user_pool_arn = module.cognito.user_pool_arn
+  sns_topic_arn         = local.guardduty_enabled ? module.security_monitoring.sns_topic_arn : null
+
+  depends_on = [module.security_monitoring, module.cognito]
 }

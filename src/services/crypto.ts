@@ -182,8 +182,8 @@ export function generateSecurePassword(options: {
   }
 
   const requiredChars: string[] = [];
-  Object.entries(charSets).forEach(([key, chars]) => {
-    if (chars && options[key as keyof typeof options]) {
+  Object.entries(charSets).forEach(([, chars]) => {
+    if (chars) {
       requiredChars.push(chars[secureRandomIndex(chars.length)]);
     }
   });
@@ -232,9 +232,8 @@ export function validateSite(site: string): boolean {
 }
 
 export function validateUsername(username: string): boolean {
-  // Allow alphanumeric, dots, underscores, hyphens
-  const usernameRegex = /^[a-zA-Z0-9._-]+$/;
-  return usernameRegex.test(username) && username.length >= 1 && username.length <= 100;
+  const usernameRegex = /^[a-zA-Z0-9._@+-]+$/;
+  return usernameRegex.test(username) && username.length >= 1 && username.length <= 254;
 }
 
 export interface AuditEntry {

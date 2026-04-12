@@ -11,7 +11,7 @@ import { useToast } from "../components/ui/useToast";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
-import { Search, Plus, Pencil, Trash2, Star, Eye, EyeOff, Copy, Lock, Unlock, FolderOpen, Shield, Wand2, X, Info, KeyRound, Loader2, AlertTriangle } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Star, Eye, EyeOff, Copy, Lock, Unlock, FolderOpen, Shield, Wand2, X, Info, KeyRound, Loader2, AlertTriangle, FileText, CreditCard, User } from "lucide-react";
 import styles from "./VaultPage.module.css";
 
 type ApiPasswordItem = {
@@ -47,6 +47,28 @@ type DynamoBoolean =
   | undefined;
 
 const categoryOptions = ["login", "card", "identity", "secure note"];
+
+function formatDecryptedValue(raw: string, category: string): string {
+  if (category !== "card" && category !== "identity") return raw;
+  try {
+    const parsed = JSON.parse(raw);
+    if (category === "card") {
+      const parts: string[] = [];
+      if (parsed.cardNumber) parts.push(`Card: ${parsed.cardNumber}`);
+      if (parsed.expiry) parts.push(`Exp: ${parsed.expiry}`);
+      if (parsed.cvv) parts.push(`CVV: ${parsed.cvv}`);
+      return parts.join('  \u2022  ') || raw;
+    }
+    if (category === "identity") {
+      const parts: string[] = [];
+      if (parsed.email) parts.push(`Email: ${parsed.email}`);
+      if (parsed.phone) parts.push(`Phone: ${parsed.phone}`);
+      if (parsed.address) parts.push(`Address: ${parsed.address}`);
+      return parts.join('  \u2022  ') || raw;
+    }
+  } catch { /* not JSON, return raw */ }
+  return raw;
+}
 
 function normalizeBoolean(value: DynamoBoolean): boolean {
   if (value == null) return false;
@@ -95,6 +117,14 @@ function VaultPage() {
   const [folder, setFolder] = useState("");
   const [favorite, setFavorite] = useState(false);
   const [requireMasterPassword, setRequireMasterPassword] = useState(true);
+
+  const [noteText, setNoteText] = useState("");
+  const [cardNumber, setCardNumber] = useState("");
+  const [cardExpiry, setCardExpiry] = useState("");
+  const [cardCvv, setCardCvv] = useState("");
+  const [identityEmail, setIdentityEmail] = useState("");
+  const [identityPhone, setIdentityPhone] = useState("");
+  const [identityAddress, setIdentityAddress] = useState("");
 
   const [lockDeadline, setLockDeadline] = useState<number | null>(null);
   const [timeToLock, setTimeToLock] = useState<number>(0);
@@ -313,33 +343,78 @@ function VaultPage() {
 
   const handleSave = async () => {
     try {
-      const sanitizedSite = sanitizeInput(site.trim());
-      const sanitizedUsername = sanitizeInput(username.trim());
-      const sanitizedPassword = sanitizeInput(password.trim());
       const sanitizedFolder = sanitizeInput(folder.trim());
+      let itemSite: string;
+      let itemUsername: string;
+      let dataToEncrypt: string;
 
-      if (!sanitizedSite || !sanitizedUsername || !sanitizedPassword) {
-        addToast("Site, username, and password are required", "error");
-        return;
-      }
-
-      if (!validateSite(sanitizedSite)) {
-        addToast("Invalid site format", "error");
-        return;
-      }
-
-      if (!validateUsername(sanitizedUsername)) {
-        addToast("Invalid username format", "error");
-        return;
-      }
-
-      try {
-        const count = await checkPasswordBreach(sanitizedPassword);
-        if (count > 0) {
-          addToast(`Warning: This password has appeared in ${count.toLocaleString()} data breaches. Consider using a different password.`, "error");
+      if (category === "secure note") {
+        const sanitizedTitle = sanitizeInput(site.trim());
+        const sanitizedNote = sanitizeInput(noteText.trim(), 10000);
+        if (!sanitizedTitle || !sanitizedNote) {
+          addToast("Title and note content are required", "error");
+          return;
         }
-      } catch {
-        // HIBP check is best-effort, don't block save
+        itemSite = sanitizedTitle;
+        itemUsername = "(note)";
+        dataToEncrypt = sanitizedNote;
+      } else if (category === "card") {
+        const sanitizedLabel = sanitizeInput(site.trim());
+        const sanitizedCardholder = sanitizeInput(username.trim());
+        const sanitizedCardNum = sanitizeInput(cardNumber.trim());
+        const sanitizedExpiry = sanitizeInput(cardExpiry.trim());
+        const sanitizedCvv = sanitizeInput(cardCvv.trim());
+        if (!sanitizedLabel || !sanitizedCardholder) {
+          addToast("Label and cardholder name are required", "error");
+          return;
+        }
+        if (!sanitizedCardNum) {
+          addToast("Card number is required", "error");
+          return;
+        }
+        itemSite = sanitizedLabel;
+        itemUsername = sanitizedCardholder;
+        dataToEncrypt = JSON.stringify({ cardNumber: sanitizedCardNum, expiry: sanitizedExpiry, cvv: sanitizedCvv });
+      } else if (category === "identity") {
+        const sanitizedLabel = sanitizeInput(site.trim());
+        const sanitizedName = sanitizeInput(username.trim());
+        const sanitizedEmail = sanitizeInput(identityEmail.trim());
+        const sanitizedPhone = sanitizeInput(identityPhone.trim());
+        const sanitizedAddr = sanitizeInput(identityAddress.trim(), 500);
+        if (!sanitizedLabel || !sanitizedName) {
+          addToast("Label and full name are required", "error");
+          return;
+        }
+        itemSite = sanitizedLabel;
+        itemUsername = sanitizedName;
+        dataToEncrypt = JSON.stringify({ email: sanitizedEmail, phone: sanitizedPhone, address: sanitizedAddr });
+      } else {
+        const sanitizedSite = sanitizeInput(site.trim());
+        const sanitizedUsername = sanitizeInput(username.trim());
+        const sanitizedPassword = sanitizeInput(password.trim());
+        if (!sanitizedSite || !sanitizedUsername || !sanitizedPassword) {
+          addToast("Site, username, and password are required", "error");
+          return;
+        }
+        if (!validateSite(sanitizedSite)) {
+          addToast("Invalid site format", "error");
+          return;
+        }
+        if (!validateUsername(sanitizedUsername)) {
+          addToast("Invalid username format", "error");
+          return;
+        }
+        try {
+          const count = await checkPasswordBreach(sanitizedPassword);
+          if (count > 0) {
+            addToast(`Warning: This password has appeared in ${count.toLocaleString()} data breaches. Consider using a different password.`, "error");
+          }
+        } catch {
+          // HIBP check is best-effort
+        }
+        itemSite = sanitizedSite;
+        itemUsername = sanitizedUsername;
+        dataToEncrypt = sanitizedPassword;
       }
 
       let passw: string;
@@ -350,12 +425,12 @@ function VaultPage() {
         passw = masterPassword;
       }
 
-      const encrypted = await encryptPassword(sanitizedPassword, passw, sanitizedSite);
+      const encrypted = await encryptPassword(dataToEncrypt, passw, itemSite);
 
       const newVaultItem: VaultItem = {
-        id: `${sanitizedSite}::${sanitizedUsername}`,
-        site: sanitizedSite,
-        username: sanitizedUsername,
+        id: `${itemSite}::${itemUsername}`,
+        site: itemSite,
+        username: itemUsername,
         cipherText: encrypted.cipherText,
         iv: encrypted.iv,
         salt: encrypted.salt,
@@ -370,23 +445,30 @@ function VaultPage() {
           addToast("Original item not found for update", "error");
           return;
         }
-        await updatePassword(originalItem.site, originalItem.username, sanitizedSite, sanitizedUsername, encrypted.cipherText, encrypted.iv, encrypted.salt, category, sanitizedFolder, favorite, requireMasterPassword);
-        const newId = `${sanitizedSite}::${sanitizedUsername}`;
+        await updatePassword(originalItem.site, originalItem.username, itemSite, itemUsername, encrypted.cipherText, encrypted.iv, encrypted.salt, category, sanitizedFolder, favorite, requireMasterPassword);
+        const newId = `${itemSite}::${itemUsername}`;
         setItems((current) => current.map((i) => (i.id === editId ? { ...newVaultItem, id: newId } : i)));
         setEditId(null);
         setOriginalItem(null);
-        auditLogger.log({ action: 'password_update', site: sanitizedSite, username: sanitizedUsername, success: true, details: 'Password updated successfully' });
+        auditLogger.log({ action: 'password_update', site: itemSite, username: itemUsername, success: true, details: `${category} item updated` });
         addToast("Item updated successfully", "success");
       } else {
-        await savePassword(sanitizedSite, sanitizedUsername, encrypted.cipherText, encrypted.iv, encrypted.salt, category, sanitizedFolder, favorite, requireMasterPassword);
+        await savePassword(itemSite, itemUsername, encrypted.cipherText, encrypted.iv, encrypted.salt, category, sanitizedFolder, favorite, requireMasterPassword);
         setItems((current) => [...current, newVaultItem]);
-        auditLogger.log({ action: 'password_create', site: sanitizedSite, username: sanitizedUsername, success: true, details: 'Password created successfully' });
+        auditLogger.log({ action: 'password_create', site: itemSite, username: itemUsername, success: true, details: `${category} item created` });
         addToast("Item added to vault", "success");
       }
 
       setSite("");
       setUsername("");
       setPassword("");
+      setNoteText("");
+      setCardNumber("");
+      setCardExpiry("");
+      setCardCvv("");
+      setIdentityEmail("");
+      setIdentityPhone("");
+      setIdentityAddress("");
       setCategory("login");
       setFolder("");
       setFavorite(false);
@@ -396,7 +478,7 @@ function VaultPage() {
       setShowAddForm(false);
     } catch (error) {
       auditLogger.log({ action: editId ? 'password_update' : 'password_create', success: false, details: error instanceof Error ? error.message : String(error) });
-      addToast("Could not save password item", "error");
+      addToast("Could not save item", "error");
     }
   };
 
@@ -404,12 +486,45 @@ function VaultPage() {
     setEditId(item.id);
     setOriginalItem(item);
     setSite(item.site);
-    setUsername(item.username);
-    setPassword(decrypted[item.id] || "");
     setCategory(item.category);
     setFolder(item.folder);
     setFavorite(item.favorite);
     setRequireMasterPassword(item.requireMasterPassword);
+
+    const dec = decrypted[item.id] || "";
+    setNoteText("");
+    setCardNumber("");
+    setCardExpiry("");
+    setCardCvv("");
+    setIdentityEmail("");
+    setIdentityPhone("");
+    setIdentityAddress("");
+    setPassword("");
+
+    if (item.category === "secure note") {
+      setUsername("");
+      setNoteText(dec);
+    } else if (item.category === "card") {
+      setUsername(item.username);
+      try {
+        const parsed = JSON.parse(dec);
+        setCardNumber(parsed.cardNumber || "");
+        setCardExpiry(parsed.expiry || "");
+        setCardCvv(parsed.cvv || "");
+      } catch { /* fields empty if not yet decrypted */ }
+    } else if (item.category === "identity") {
+      setUsername(item.username);
+      try {
+        const parsed = JSON.parse(dec);
+        setIdentityEmail(parsed.email || "");
+        setIdentityPhone(parsed.phone || "");
+        setIdentityAddress(parsed.address || "");
+      } catch { /* fields empty if not yet decrypted */ }
+    } else {
+      setUsername(item.username);
+      setPassword(dec);
+    }
+
     setShowAddForm(true);
   };
 
@@ -525,6 +640,13 @@ function VaultPage() {
     setSite("");
     setUsername("");
     setPassword("");
+    setNoteText("");
+    setCardNumber("");
+    setCardExpiry("");
+    setCardCvv("");
+    setIdentityEmail("");
+    setIdentityPhone("");
+    setIdentityAddress("");
     setCategory("login");
     setFolder("");
     setFavorite(false);
@@ -613,28 +735,9 @@ function VaultPage() {
           <h3 className={styles.formTitle}>
             {editId ? <><Pencil size={18} /> Edit Item</> : <><Plus size={18} /> New Item</>}
           </h3>
+
+          {/* Category selector — always visible at top */}
           <div className={styles.formGrid}>
-            <Input label="Site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="example.com" />
-            <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="user@example.com" />
-            <div className={`${styles.formFullRow} ${styles.passwordInputRow}`}>
-              <Input label="Password" value={password} onChange={(e) => { setPassword(e.target.value); setBreachCount(null); }} placeholder="Enter or generate a password" />
-              <Button variant="secondary" icon={<Wand2 size={16} />} onClick={generatePassword}>Generate</Button>
-            </div>
-            {checkingBreach && (
-              <div className={`${styles.formFullRow} ${styles.breachStatus}`}>
-                <Loader2 size={14} className={styles.spinner} /> Checking breach databases...
-              </div>
-            )}
-            {breachCount !== null && breachCount > 0 && !checkingBreach && (
-              <div className={`${styles.formFullRow} ${styles.breachWarning}`}>
-                <AlertTriangle size={14} /> This password appeared in {breachCount.toLocaleString()} data breaches
-              </div>
-            )}
-            {breachCount === 0 && !checkingBreach && (
-              <div className={`${styles.formFullRow} ${styles.breachSafe}`}>
-                <Shield size={14} /> Not found in any known data breaches
-              </div>
-            )}
             <div className={styles.selectWrapper}>
               <span className={styles.selectLabel}>Category</span>
               <select className={styles.select} value={category} onChange={(e) => setCategory(e.target.value)}>
@@ -642,31 +745,110 @@ function VaultPage() {
               </select>
             </div>
             <Input label="Folder" value={folder} onChange={(e) => setFolder(e.target.value)} placeholder="Optional folder" />
-            <div className={`${styles.formFullRow} ${styles.formOptions}`}>
-              <label className={styles.checkbox}>
-                <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} />
-                Favorite
-              </label>
-              <label className={styles.checkbox}>
-                <input type="checkbox" checked={requireMasterPassword} onChange={(e) => setRequireMasterPassword(e.target.checked)} />
-                Require Master Password
-              </label>
-            </div>
           </div>
 
-          {/* Generator options */}
-          <div className={styles.generatorSection}>
-            <div className={styles.generatorTitle}><Wand2 size={14} /> Generator Options</div>
-            <div className={styles.generatorOptions}>
-              <label className={styles.checkbox}><input type="checkbox" checked={generatorIncludeLower} onChange={(e) => setGeneratorIncludeLower(e.target.checked)} /> a-z</label>
-              <label className={styles.checkbox}><input type="checkbox" checked={generatorIncludeUpper} onChange={(e) => setGeneratorIncludeUpper(e.target.checked)} /> A-Z</label>
-              <label className={styles.checkbox}><input type="checkbox" checked={generatorIncludeNumbers} onChange={(e) => setGeneratorIncludeNumbers(e.target.checked)} /> 0-9</label>
-              <label className={styles.checkbox}><input type="checkbox" checked={generatorIncludeSymbols} onChange={(e) => setGeneratorIncludeSymbols(e.target.checked)} /> !@#</label>
-              <label className={styles.checkbox}>
-                Length
-                <input type="number" value={generatorLength} min={8} max={64} onChange={(e) => setGeneratorLength(Number(e.target.value))} className={styles.lengthInput} />
-              </label>
+          {/* ---- Login form ---- */}
+          {category === "login" && (
+            <>
+              <div className={styles.formGrid}>
+                <Input label="Site" value={site} onChange={(e) => setSite(e.target.value)} placeholder="example.com" />
+                <Input label="Username" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="user@example.com" />
+                <div className={`${styles.formFullRow} ${styles.passwordInputRow}`}>
+                  <Input label="Password" value={password} onChange={(e) => { setPassword(e.target.value); setBreachCount(null); }} placeholder="Enter or generate a password" />
+                  <Button variant="secondary" icon={<Wand2 size={16} />} onClick={generatePassword}>Generate</Button>
+                </div>
+                {checkingBreach && (
+                  <div className={`${styles.formFullRow} ${styles.breachStatus}`}>
+                    <Loader2 size={14} className={styles.spinner} /> Checking breach databases...
+                  </div>
+                )}
+                {breachCount !== null && breachCount > 0 && !checkingBreach && (
+                  <div className={`${styles.formFullRow} ${styles.breachWarning}`}>
+                    <AlertTriangle size={14} /> This password appeared in {breachCount.toLocaleString()} data breaches
+                  </div>
+                )}
+                {breachCount === 0 && !checkingBreach && (
+                  <div className={`${styles.formFullRow} ${styles.breachSafe}`}>
+                    <Shield size={14} /> Not found in any known data breaches
+                  </div>
+                )}
+              </div>
+              <div className={styles.generatorSection}>
+                <div className={styles.generatorTitle}><Wand2 size={14} /> Generator Options</div>
+                <div className={styles.generatorOptions}>
+                  <label className={styles.checkbox}><input type="checkbox" checked={generatorIncludeLower} onChange={(e) => setGeneratorIncludeLower(e.target.checked)} /> a-z</label>
+                  <label className={styles.checkbox}><input type="checkbox" checked={generatorIncludeUpper} onChange={(e) => setGeneratorIncludeUpper(e.target.checked)} /> A-Z</label>
+                  <label className={styles.checkbox}><input type="checkbox" checked={generatorIncludeNumbers} onChange={(e) => setGeneratorIncludeNumbers(e.target.checked)} /> 0-9</label>
+                  <label className={styles.checkbox}><input type="checkbox" checked={generatorIncludeSymbols} onChange={(e) => setGeneratorIncludeSymbols(e.target.checked)} /> !@#</label>
+                  <label className={styles.checkbox}>
+                    Length
+                    <input type="number" value={generatorLength} min={8} max={64} onChange={(e) => setGeneratorLength(Number(e.target.value))} className={styles.lengthInput} />
+                  </label>
+                </div>
+              </div>
+            </>
+          )}
+
+          {/* ---- Secure Note form ---- */}
+          {category === "secure note" && (
+            <div className={styles.formGrid}>
+              <div className={styles.formFullRow}>
+                <Input label="Title" value={site} onChange={(e) => setSite(e.target.value)} placeholder="Note title" />
+              </div>
+              <div className={styles.formFullRow}>
+                <label className={styles.textareaLabel}>Note</label>
+                <textarea
+                  className={styles.textarea}
+                  value={noteText}
+                  onChange={(e) => setNoteText(e.target.value)}
+                  placeholder="Enter your secure note..."
+                  rows={6}
+                />
+              </div>
             </div>
+          )}
+
+          {/* ---- Card form ---- */}
+          {category === "card" && (
+            <div className={styles.formGrid}>
+              <Input label="Label" value={site} onChange={(e) => setSite(e.target.value)} placeholder="e.g. Visa ending 4242" />
+              <Input label="Cardholder Name" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Full name on card" />
+              <Input label="Card Number" value={cardNumber} onChange={(e) => setCardNumber(e.target.value)} placeholder="•••• •••• •••• ••••" />
+              <Input label="Expiry" value={cardExpiry} onChange={(e) => setCardExpiry(e.target.value)} placeholder="MM/YY" />
+              <Input label="CVV" value={cardCvv} onChange={(e) => setCardCvv(e.target.value)} placeholder="•••" type="password" />
+            </div>
+          )}
+
+          {/* ---- Identity form ---- */}
+          {category === "identity" && (
+            <div className={styles.formGrid}>
+              <Input label="Label" value={site} onChange={(e) => setSite(e.target.value)} placeholder="e.g. Personal, Work" />
+              <Input label="Full Name" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="John Doe" />
+              <Input label="Email" value={identityEmail} onChange={(e) => setIdentityEmail(e.target.value)} placeholder="john@example.com" />
+              <Input label="Phone" value={identityPhone} onChange={(e) => setIdentityPhone(e.target.value)} placeholder="+30 210 1234567" />
+              <div className={styles.formFullRow}>
+                <label className={styles.textareaLabel}>Address</label>
+                <textarea
+                  className={styles.textarea}
+                  value={identityAddress}
+                  onChange={(e) => setIdentityAddress(e.target.value)}
+                  placeholder="Street address, city, country..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Common options */}
+          <div className={`${styles.formOptions}`}>
+            <label className={styles.checkbox}>
+              <input type="checkbox" checked={favorite} onChange={(e) => setFavorite(e.target.checked)} />
+              Favorite
+            </label>
+            <label className={styles.checkbox}>
+              <input type="checkbox" checked={requireMasterPassword} onChange={(e) => setRequireMasterPassword(e.target.checked)} />
+              Require Master Password
+            </label>
           </div>
 
           <div className={styles.formActions}>
@@ -696,6 +878,10 @@ function VaultPage() {
             <div key={item.id} className={styles.item}>
               <div className={styles.itemHeader}>
                 <div className={styles.itemInfo}>
+                  {item.category === "secure note" && <FileText size={14} className={styles.itemCategoryIcon} />}
+                  {item.category === "card" && <CreditCard size={14} className={styles.itemCategoryIcon} />}
+                  {item.category === "identity" && <User size={14} className={styles.itemCategoryIcon} />}
+                  {item.category === "login" && <KeyRound size={14} className={styles.itemCategoryIcon} />}
                   <span className={styles.itemSite}>{item.site}</span>
                   <span className={styles.itemBadge}>{item.category}</span>
                   {item.folder && (
@@ -716,15 +902,23 @@ function VaultPage() {
                 </div>
               </div>
               <div className={styles.itemBody}>
-                <span className={styles.itemUsername}>{item.username}</span>
+                {item.category === "secure note" ? (
+                  <span className={styles.itemUsername}>Encrypted note</span>
+                ) : (
+                  <span className={styles.itemUsername}>{item.username}</span>
+                )}
                 <div className={styles.itemPasswordActions}>
-                  <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => handleCopy(item.username)}>Username</Button>
+                  {item.category !== "secure note" && (
+                    <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => handleCopy(item.username)}>{item.category === "card" ? "Cardholder" : item.category === "identity" ? "Name" : "Username"}</Button>
+                  )}
                   {decrypted[item.id] ? (
                     <>
                       <Button variant="ghost" size="sm" icon={showPassword[item.id] ? <EyeOff size={14} /> : <Eye size={14} />} onClick={() => setShowPassword((s) => ({ ...s, [item.id]: !s[item.id] }))}>
                         {showPassword[item.id] ? "Hide" : "Show"}
                       </Button>
-                      <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => handleCopy(decrypted[item.id], 'password')}>Password</Button>
+                      {item.category === "login" && (
+                        <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => handleCopy(decrypted[item.id], 'password')}>Password</Button>
+                      )}
                     </>
                   ) : (
                     <Button variant="secondary" size="sm" icon={<Unlock size={14} />} onClick={() => handleDecrypt(item)}>Decrypt</Button>
@@ -732,7 +926,7 @@ function VaultPage() {
                 </div>
               </div>
               {showPassword[item.id] && decrypted[item.id] && (
-                <div className={styles.revealedPassword}>{decrypted[item.id]}</div>
+                <div className={styles.revealedPassword}>{formatDecryptedValue(decrypted[item.id], item.category)}</div>
               )}
             </div>
           ))}
@@ -747,10 +941,12 @@ function VaultPage() {
               <h3 className={styles.modalTitle}>{selectedItem.site}</h3>
               <button className={styles.closeButton} onClick={closeItemModal}><X size={18} /></button>
             </div>
-            <div className={styles.detailRow}>
-              <span className={styles.detailLabel}>Username</span>
-              <span className={styles.detailValue}>{selectedItem.username}</span>
-            </div>
+            {selectedItem.category !== "secure note" && (
+              <div className={styles.detailRow}>
+                <span className={styles.detailLabel}>{selectedItem.category === "card" ? "Cardholder" : selectedItem.category === "identity" ? "Full Name" : "Username"}</span>
+                <span className={styles.detailValue}>{selectedItem.username}</span>
+              </div>
+            )}
             <div className={styles.detailRow}>
               <span className={styles.detailLabel}>Category</span>
               <span className={styles.detailValue}>{selectedItem.category}</span>
@@ -768,8 +964,10 @@ function VaultPage() {
               <span className={styles.detailValue}>{selectedItem.requireMasterPassword ? "Yes" : "No"}</span>
             </div>
             <div className={styles.modalPasswordRow}>
-              <div className={styles.modalPasswordLabel}>Password</div>
-              <div className={styles.modalPasswordValue}>{modalPassword || '••••••••'}</div>
+              <div className={styles.modalPasswordLabel}>
+                {selectedItem.category === "secure note" ? "Note" : selectedItem.category === "card" ? "Card Details" : selectedItem.category === "identity" ? "Identity Details" : "Password"}
+              </div>
+              <div className={styles.modalPasswordValue}>{modalPassword ? formatDecryptedValue(modalPassword, selectedItem.category) : '••••••••'}</div>
             </div>
             <div className={styles.modalActions}>
               {!modalPassword && <Button variant="secondary" size="sm" icon={<Eye size={14} />} onClick={handleModalRevealPassword}>Reveal</Button>}

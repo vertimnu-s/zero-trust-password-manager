@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useToast } from '../components/ui/useToast';
-import { changePassword, globalSignOutUser } from '../services/cognito';
+import { changePassword, globalSignOutUser, deleteAccount } from '../services/cognito';
 import { validatePassword } from '../utils/passwordValidator';
 import Card from '../components/ui/Card';
 import Input from '../components/ui/Input';
 import Button from '../components/ui/Button';
 import PasswordStrength from '../components/ui/PasswordStrength';
-import { Lock, LogOut } from 'lucide-react';
+import { Lock, LogOut, Trash2 } from 'lucide-react';
 import styles from './ProfilePage.module.css';
 
 export default function ProfilePage() {
@@ -16,6 +16,25 @@ export default function ProfilePage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteAccount = async () => {
+    if (deleteConfirmText !== 'DELETE') return;
+    setDeleting(true);
+    try {
+      await deleteAccount();
+      localStorage.removeItem('idToken');
+      localStorage.removeItem('refreshToken');
+      window.location.reload();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      addToast(`Failed to delete account: ${message}`, 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleSignOutEverywhere = async () => {
     setSigningOut(true);
@@ -117,6 +136,45 @@ export default function ProfilePage() {
         <Button onClick={handleSignOutEverywhere} loading={signingOut} variant="danger" fullWidth>
           Sign Out Everywhere
         </Button>
+      </Card>
+
+      <Card className={styles.section}>
+        <div className={styles.sectionHeader}>
+          <Trash2 size={20} />
+          <h2>Delete Account</h2>
+        </div>
+        <p className={styles.description}>
+          Permanently delete your account and all vault data. This action cannot be undone.
+        </p>
+        {!showDeleteConfirm ? (
+          <Button onClick={() => setShowDeleteConfirm(true)} variant="danger" fullWidth>
+            Delete My Account
+          </Button>
+        ) : (
+          <div className={styles.deleteConfirm}>
+            <p className={styles.deleteWarning}>
+              This will permanently delete your account, including all stored passwords, cards, identities, and notes. Type <strong>DELETE</strong> to confirm.
+            </p>
+            <Input
+              value={deleteConfirmText}
+              onChange={e => setDeleteConfirmText(e.target.value)}
+              placeholder='Type "DELETE" to confirm'
+            />
+            <div className={styles.deleteActions}>
+              <Button
+                onClick={handleDeleteAccount}
+                loading={deleting}
+                variant="danger"
+                disabled={deleteConfirmText !== 'DELETE'}
+              >
+                Permanently Delete Account
+              </Button>
+              <Button variant="ghost" onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(''); }}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
     </div>
   );

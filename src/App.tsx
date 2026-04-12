@@ -19,8 +19,21 @@ function getTokenExpiry(token: string): number | null {
   }
 }
 
+function hasValidToken(): boolean {
+  const token = localStorage.getItem("idToken");
+  if (!token) return false;
+  const expiry = getTokenExpiry(token);
+  return !!expiry && Date.now() < expiry;
+}
+
 function App() {
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(hasValidToken);
+  const [checkingSession, setCheckingSession] = useState(() => {
+    const token = localStorage.getItem("idToken");
+    if (!token) return false;
+    const expiry = getTokenExpiry(token);
+    return !expiry || Date.now() >= expiry;
+  });
   const [currentPage, setCurrentPage] = useState<Page>('vault');
   const lastActivityRef = useRef<number>(0);
 
@@ -34,7 +47,20 @@ function App() {
 
   useEffect(() => {
     lastActivityRef.current = Date.now();
-  }, []);
+
+    if (!checkingSession) return;
+
+    refreshSession()
+      .then((newToken) => {
+        localStorage.setItem("idToken", newToken);
+        setLoggedIn(true);
+      })
+      .catch(() => {
+        localStorage.removeItem("idToken");
+        localStorage.removeItem("refreshToken");
+      })
+      .finally(() => setCheckingSession(false));
+  }, [checkingSession]);
 
   useEffect(() => {
     if (!loggedIn) return;
@@ -98,6 +124,10 @@ function App() {
       clearInterval(interval);
     };
   }, [loggedIn, handleLogout]);
+
+  if (checkingSession) {
+    return null;
+  }
 
   if (!loggedIn) {
     return <LoginPage onLogin={() => setLoggedIn(true)} />;

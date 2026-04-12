@@ -32,7 +32,7 @@ export const validatePassword = (password: string): PasswordValidation => {
     errors.push("At least one number (0-9)");
   }
 
-  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(password)) {
     errors.push("At least one special character (e.g., !@#$%^&*)");
   }
 
