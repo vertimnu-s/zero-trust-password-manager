@@ -11,7 +11,7 @@
  * Run locally — no AWS costs.
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   encryptPassword,
   decryptPassword,

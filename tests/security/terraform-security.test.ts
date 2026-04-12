@@ -17,9 +17,11 @@
  */
 
 import { describe, it, expect } from 'vitest'
-import { readFileSync, readdirSync, existsSync } from 'node:fs'
-import { join, resolve } from 'node:path'
+import { readFileSync, readdirSync, existsSync } from 'fs'
+import { join, resolve, dirname } from 'path'
+import { fileURLToPath } from 'url'
 
+const __dirname = dirname(fileURLToPath(import.meta.url))
 const TERRAFORM_DIR = resolve(__dirname, '../../terraform')
 
 function readTfFile(relativePath: string): string {
@@ -32,8 +34,8 @@ function readAllTfFiles(dir: string): string {
   const fullDir = join(TERRAFORM_DIR, dir)
   if (!existsSync(fullDir)) return ''
   return readdirSync(fullDir)
-    .filter((f) => f.endsWith('.tf'))
-    .map((f) => readFileSync(join(fullDir, f), 'utf-8'))
+    .filter((f: string) => f.endsWith('.tf'))
+    .map((f: string) => readFileSync(join(fullDir, f), 'utf-8'))
     .join('\n')
 }
 
@@ -46,7 +48,7 @@ describe('Terraform: IAM Least-Privilege', () => {
 
   it('no wildcard (*) in IAM Action fields', () => {
     // Extract Action arrays — look for "Action = ["*"]" or "Action = "*""
-    const wildcardAction = /Action\s*=\s*(\[?\s*"\*"\s*\]?|\"\*\")/g
+    const wildcardAction = /Action\s*=\s*(\[?\s*"\*"\s*\]?|"\*")/g
     expect(iamContent).not.toMatch(wildcardAction)
   })
 

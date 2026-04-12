@@ -24,8 +24,6 @@ describe('generateKeyFromPassword', () => {
 
   it('produces same key for same password + salt', async () => {
     const salt = crypto.getRandomValues(new Uint8Array(16))
-    const key1 = await generateKeyFromPassword('TestPassword123!', salt)
-    const key2 = await generateKeyFromPassword('TestPassword123!', salt)
     // Export both keys to compare raw bytes
     const raw1 = await crypto.subtle.exportKey('raw', await reDerive('TestPassword123!', salt))
     const raw2 = await crypto.subtle.exportKey('raw', await reDerive('TestPassword123!', salt))
@@ -55,9 +53,9 @@ async function reDerive(password: string, salt: Uint8Array) {
     'raw', enc.encode(password), { name: 'PBKDF2' }, false, ['deriveKey'],
   )
   return crypto.subtle.deriveKey(
-    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' },
+    { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' } as Pbkdf2Params,
     keyMaterial,
-    { name: 'AES-GCM', length: 256 },
+    { name: 'AES-GCM', length: 256 } as AesKeyGenParams,
     true,          // extractable – for comparison only
     ['encrypt', 'decrypt'],
   )
@@ -224,7 +222,7 @@ describe('generateSecurePassword', () => {
       expect(pw).toMatch(/[a-z]/)
       expect(pw).toMatch(/[A-Z]/)
       expect(pw).toMatch(/[0-9]/)
-      expect(pw).toMatch(/[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]/)
+      expect(pw).toMatch(/[!@#$%^&*()_+\-=[\]{}|;:,.<>?]/)
     }
   })
 

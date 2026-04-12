@@ -27,7 +27,8 @@ describe('checkPasswordBreach', () => {
     expect(count).toBe(9659365)
     expect(globalThis.fetch).toHaveBeenCalledTimes(1)
     // Verify k-anonymity: only the 5-char prefix is sent to the API
-    const callUrl = (globalThis.fetch as any).mock.calls[0][0]
+    const mockFetch = vi.mocked(globalThis.fetch)
+    const callUrl = mockFetch.mock.calls[0][0]
     expect(callUrl).toBe('https://api.pwnedpasswords.com/range/5BAA6')
   })
 
@@ -60,7 +61,8 @@ describe('checkPasswordBreach', () => {
     })
 
     await checkPasswordBreach('test')
-    const callHeaders = (globalThis.fetch as any).mock.calls[0][1]?.headers
+    const mockFetch = vi.mocked(globalThis.fetch)
+    const callHeaders = mockFetch.mock.calls[0][1]?.headers
     expect(callHeaders).toHaveProperty('Add-Padding', 'true')
   })
 
@@ -71,7 +73,8 @@ describe('checkPasswordBreach', () => {
     })
 
     await checkPasswordBreach('anything')
-    const callUrl: string = (globalThis.fetch as any).mock.calls[0][0]
+    const mockFetch = vi.mocked(globalThis.fetch)
+    const callUrl = mockFetch.mock.calls[0][0] as string
     // URL should match /range/XXXXX where X is a hex char
     expect(callUrl).toMatch(/\/range\/[0-9A-F]{5}$/)
   })
