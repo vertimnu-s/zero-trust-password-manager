@@ -42,6 +42,7 @@ variable "delete_lambda_function_arn" {
 }
 
 variable "create_lambda_function_name" {
+
   description = "Name of create password Lambda"
   type        = string
 }
@@ -62,6 +63,7 @@ variable "delete_lambda_function_name" {
 }
 
 variable "cognito_user_pool_id" {
+
   description = "Cognito User Pool ID for JWT authorizer"
   type        = string
 }

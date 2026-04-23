@@ -258,6 +258,14 @@ function VaultPage() {
     });
   };
 
+  const promptMasterPasswordForDecryption = (): Promise<string> => {
+    return new Promise((resolve) => {
+      setMasterInput("");
+      setShowMasterModal(true);
+      setMasterResolve(() => resolve);
+    });
+  };
+
   const handleMasterSubmit = () => {
     if (!masterInput) return;
     setMasterPassword(masterInput);
@@ -289,16 +297,7 @@ function VaultPage() {
     }
 
     try {
-      let passw: string;
-      if (item.requireMasterPassword) {
-        passw = await promptMasterPassword();
-      } else {
-        if (!masterPassword) {
-          passw = await promptMasterPassword();
-        } else {
-          passw = masterPassword;
-        }
-      }
+      const passw = await promptMasterPasswordForDecryption();
       if (!passw) {
         auditLogger.log({ action: 'password_decrypt', site: item.site, username: item.username, success: false, details: 'Master password not provided' });
         return;
@@ -544,12 +543,7 @@ function VaultPage() {
     if (!selectedItem) return;
 
     try {
-      let passw: string;
-      if (selectedItem.requireMasterPassword || !masterPassword) {
-        passw = await promptMasterPassword();
-      } else {
-        passw = masterPassword;
-      }
+      const passw = await promptMasterPasswordForDecryption();
       if (!passw) return;
 
       const plain = await decryptPassword(selectedItem.cipherText, selectedItem.iv, selectedItem.salt, passw, selectedItem.site);

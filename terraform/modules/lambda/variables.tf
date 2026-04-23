@@ -31,9 +31,11 @@ variable "delete_lambda_role_arn" {
 }
 
 variable "dynamodb_table_name" {
+
   description = "DynamoDB table name for password vault"
   type        = string
 }
+
 
 variable "s3_audit_logs_bucket_name" {
   description = "S3 bucket name for audit logs"
@@ -73,9 +75,11 @@ variable "delete_log_group_name" {
 }
 
 variable "frontend_origin" {
+
   description = "Frontend origin for CORS headers"
   type        = string
 }
+
 
 variable "reserved_concurrency" {
   description = "Maximum concurrent executions per Lambda function (0 = disabled, -1 = unreserved)"

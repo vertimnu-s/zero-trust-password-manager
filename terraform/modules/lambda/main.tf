@@ -1,4 +1,5 @@
-# Lambda Module - Deploys 4 Lambda functions for password vault operations
+# Lambda Module - Deploys Lambda functions for password vault operations
+
 
 data "aws_caller_identity" "current" {}
 
@@ -27,6 +28,8 @@ data "archive_file" "delete_password_zip" {
   source_dir  = "${path.module}/../../lambda-functions/delete-password"
   output_path = "/tmp/delete-password.zip"
 }
+
+
 
 # ========== 1. CREATE PASSWORD LAMBDA ==========
 resource "aws_lambda_function" "create_password" {
@@ -191,3 +194,6 @@ resource "aws_lambda_function" "delete_password" {
     Function = "DeletePassword"
   }
 }
+
+
+

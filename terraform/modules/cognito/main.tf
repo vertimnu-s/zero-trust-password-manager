@@ -75,7 +75,7 @@ resource "aws_cognito_user_pool" "main" {
 
   device_configuration {
     challenge_required_on_new_device      = var.mfa_enabled
-    device_only_remembered_on_user_prompt = false
+    device_only_remembered_on_user_prompt = true
   }
 
   # Ignore schema changes - schema cannot be modified after User Pool creation
@@ -114,7 +114,7 @@ resource "aws_cognito_user_pool_client" "frontend" {
     refresh_token = "days"
   }
 
-  # Prevent users from using the same password twice (if implemented)
+  # Prevent users from using the same password twice
   prevent_user_existence_errors = "ENABLED"
 
   enable_token_revocation = true

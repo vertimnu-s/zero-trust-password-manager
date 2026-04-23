@@ -1,3 +1,8 @@
+variable "enable_runtime_monitoring" {
+  description = "Enable GuardDuty runtime monitoring"
+  type        = bool
+  default     = true
+}
 variable "project_name" {
   type = string
 }

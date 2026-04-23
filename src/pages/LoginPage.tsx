@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { loginUser, registerUser, confirmUser, resendConfirmationCode } from "../services/cognito";
+import { loginUser, registerUser, confirmUser, resendConfirmationCode, completeMFAChallenge, clearPendingMFA } from "../services/cognito";
 import { validatePassword } from "../utils/passwordValidator";
 import { useToast } from "../components/ui/useToast";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
 import Button from "../components/ui/Button";
 import PasswordStrength from "../components/ui/PasswordStrength";
-import { Shield, Mail, Lock, Eye, EyeOff, KeyRound } from "lucide-react";
+import { Shield, Mail, Lock, Eye, EyeOff, KeyRound, Smartphone } from "lucide-react";
 import styles from "./LoginPage.module.css";
 
-type AuthView = "login" | "register" | "confirm";
+type AuthView = "login" | "register" | "confirm" | "mfa";
 
 function LoginPage({ onLogin }: { onLogin: () => void }) {
   const { addToast } = useToast();
@@ -18,6 +18,7 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
   const [password, setPassword] = useState("");
   const [showPasswordText, setShowPasswordText] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
@@ -28,13 +29,41 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
 
     setLoading(true);
     try {
-      const token = await loginUser(email.trim(), password);
-      localStorage.setItem("idToken", token as string);
+      const result = await loginUser(email.trim(), password);
+
+      if (typeof result === 'object' && 'mfaRequired' in result && result.mfaRequired) {
+        setView("mfa");
+        setMfaCode("");
+        addToast("MFA verification required. Enter the code from your authenticator app.", "info");
+      } else {
+        localStorage.setItem("idToken", result as string);
+        addToast("Login successful!", "success");
+        onLogin();
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      addToast(`Login failed: ${message}`, "error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMFASubmit = async () => {
+    if (!mfaCode.trim()) {
+      addToast("MFA code is required.", "error");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const token = await completeMFAChallenge(mfaCode.trim());
+      localStorage.setItem("idToken", token);
+      setMfaCode("");
       addToast("Login successful!", "success");
       onLogin();
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      addToast(`Login failed: ${message}`, "error");
+      addToast(`MFA verification failed: ${message}`, "error");
     } finally {
       setLoading(false);
     }
@@ -117,6 +146,11 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
     else if (view === "confirm") handleConfirm();
   };
 
+  const handleBackToLogin = () => {
+    clearPendingMFA();
+    setView("login");
+  };
+
   return (
     <div className={styles.page}>
       <Card className={styles.card}>
@@ -153,7 +187,30 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
                 <Button variant="ghost" onClick={handleResend} size="sm">
                   Resend Code
                 </Button>
-                <Button variant="ghost" onClick={() => setView("login")} size="sm">
+                <Button variant="ghost" onClick={handleBackToLogin} size="sm">
+                  Back to Login
+                </Button>
+              </div>
+            </>
+          ) : view === "mfa" ? (
+            <>
+              <p className={styles.mfaInstructions}>
+                Enter the 6-digit code from your authenticator app
+              </p>
+              <Input
+                label="Authentication Code"
+                type="text"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                icon={<Smartphone size={18} />}
+                maxLength={6}
+              />
+              <Button onClick={handleMFASubmit} loading={loading} fullWidth>
+                Verify Code
+              </Button>
+              <div className={styles.actions}>
+                <Button variant="ghost" onClick={handleBackToLogin} size="sm">
                   Back to Login
                 </Button>
               </div>
@@ -200,7 +257,7 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
           )}
         </div>
 
-        {view !== "confirm" && (
+        {view !== "confirm" && view !== "mfa" && (
           <div className={styles.footer}>
             {view === "login" ? (
               <span>

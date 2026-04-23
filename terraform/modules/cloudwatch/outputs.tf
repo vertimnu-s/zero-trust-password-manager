@@ -21,9 +21,11 @@ output "delete_log_group_name" {
 }
 
 output "api_gateway_log_group_name" {
+
   description = "CloudWatch Log Group name for API Gateway"
   value       = aws_cloudwatch_log_group.api_gateway.name
 }
+
 
 output "api_gateway_log_group_arn" {
   description = "CloudWatch Log Group ARN for API Gateway access logging"
@@ -32,7 +34,7 @@ output "api_gateway_log_group_arn" {
 
 output "log_group_names" {
   description = "All CloudWatch log group names"
-  value = {
+    value = {
     create      = aws_cloudwatch_log_group.create_password.name
     read        = aws_cloudwatch_log_group.read_passwords.name
     update      = aws_cloudwatch_log_group.update_password.name
@@ -40,3 +42,5 @@ output "log_group_names" {
     api_gateway = aws_cloudwatch_log_group.api_gateway.name
   }
 }
+
+
