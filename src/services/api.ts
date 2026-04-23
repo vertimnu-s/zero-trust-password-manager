@@ -26,7 +26,7 @@ const routePaths = {
   create: `${API_URL}/createPasswordItem`,
   read: `${API_URL}/getPasswordItems`,
   update: `${API_URL}/updatePasswordItem`,
-  delete: `${API_URL}/deletePasswordItem`,
+    delete: `${API_URL}/deletePasswordItem`,
 };
 
 export const savePassword = async (
@@ -125,6 +125,8 @@ export const deletePassword = async (site: string, username: string) => {
 
   return handleResponse(response);
 };
+
+
 
 function handleUnauthorized() {
   localStorage.removeItem("idToken");

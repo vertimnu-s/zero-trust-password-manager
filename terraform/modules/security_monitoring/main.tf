@@ -6,12 +6,49 @@ resource "aws_guardduty_detector" "main" {
   enable                       = true
   finding_publishing_frequency = "FIFTEEN_MINUTES"
 
+  datasources {
+    kubernetes {
+      audit_logs {
+        enable = true
+      }
+    }
+    malware_protection {
+      scan_ec2_instance_with_findings {
+        ebs_volumes {
+          enable = true
+        }
+      }
+    }
+  }
+
   tags = {
     Name = "${var.project_name}-guardduty-${var.environment}"
   }
 }
 
+resource "aws_guardduty_detector_feature" "runtime_monitoring" {
+  count       = var.enabled ? 1 : 0
+  detector_id = aws_guardduty_detector.main[0].id
+  name        = "RUNTIME_MONITORING"
+  status      = "ENABLED"
+
+  additional_configuration {
+    name   = "EKS_ADDON_MANAGEMENT"
+    status = "ENABLED"
+  }
+}
+
+resource "aws_guardduty_detector_feature" "eks_runtime" {
+  count       = var.enabled ? 1 : 0
+  detector_id = aws_guardduty_detector.main[0].id
+  name        = "EKS_RUNTIME_MONITORING"
+  status      = "ENABLED"
+}
+
+
+
 # SNS topic — central notification channel for all security alerts.
+
 # GuardDuty findings, CloudWatch alarms, and WAF alerts all route here.
 resource "aws_sns_topic" "security_alerts" {
   count = var.enabled ? 1 : 0

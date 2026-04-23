@@ -20,6 +20,7 @@ output "delete_password_function_arn" {
   value       = aws_lambda_function.delete_password.arn
 }
 
+
 output "create_password_function_name" {
   description = "Name of create password Lambda function"
   value       = aws_lambda_function.create_password.function_name
@@ -39,3 +40,4 @@ output "delete_password_function_name" {
   description = "Name of delete password Lambda function"
   value       = aws_lambda_function.delete_password.function_name
 }
+

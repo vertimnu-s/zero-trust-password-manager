@@ -87,8 +87,13 @@ resource "aws_cloudtrail" "main" {
   name                       = "${var.project_name}-trail-${var.environment}"
   s3_bucket_name             = aws_s3_bucket.trail_logs[0].id
   include_global_service_events = true
-  is_multi_region_trail      = false
+  is_multi_region_trail      = true
   enable_log_file_validation = true
+
+  event_selector {
+    read_write_type           = "All"
+    include_management_events = true
+  }
 
   tags = {
     Name = "${var.project_name}-trail-${var.environment}"
@@ -96,3 +101,4 @@ resource "aws_cloudtrail" "main" {
 
   depends_on = [aws_s3_bucket_policy.trail_logs]
 }
+

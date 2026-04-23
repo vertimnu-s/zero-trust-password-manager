@@ -70,7 +70,7 @@ output "cloudwatch_log_groups" {
 output "frontend_env_variables" {
   description = "Environment variables needed for the frontend .env file"
   value = {
-    VITE_API_URL             = module.api_gateway.api_endpoint
+    VITE_API_URL              = module.api_gateway.api_endpoint
     VITE_COGNITO_USER_POOL_ID = module.cognito.user_pool_id
     VITE_COGNITO_CLIENT_ID    = module.cognito.client_id
   }
@@ -99,7 +99,7 @@ output "cloudfront_api_endpoint" {
 output "waf_protected_frontend_env" {
   description = "Frontend env using WAF-protected endpoint (recommended for production)"
   value = {
-    VITE_API_URL             = module.waf.cloudfront_api_endpoint
+    VITE_API_URL              = module.waf.cloudfront_api_endpoint
     VITE_COGNITO_USER_POOL_ID = module.cognito.user_pool_id
     VITE_COGNITO_CLIENT_ID    = module.cognito.client_id
   }

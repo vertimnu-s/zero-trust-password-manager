@@ -6,67 +6,44 @@ data "aws_region" "current" {
   count = var.enabled ? 1 : 0
 }
 
-resource "aws_iam_role" "config" {
-  count = var.enabled ? 1 : 0
+resource "aws_iam_service_linked_role" "config" {
 
-  name = "${var.project_name}-config-role-${var.environment}"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect    = "Allow"
-      Principal = { Service = "config.amazonaws.com" }
-      Action    = "sts:AssumeRole"
-    }]
-  })
-
-  tags = {
-    Name = "${var.project_name}-config-role-${var.environment}"
-  }
+  count            = var.enabled ? 1 : 0
+  aws_service_name = "config.amazonaws.com"
 }
 
-resource "aws_iam_role_policy" "config_s3" {
-  count = var.enabled ? 1 : 0
-
-  name = "${var.project_name}-config-s3-delivery"
-  role = aws_iam_role.config[0].id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid      = "S3PutConfig"
-        Effect   = "Allow"
-        Action   = "s3:PutObject"
-        Resource = "${var.audit_logs_bucket_arn}/config/*"
-        Condition = {
-          StringEquals = {
-            "s3:x-amz-acl" = "bucket-owner-full-control"
-          }
-        }
-      },
-      {
-        Sid      = "S3GetBucketAcl"
-        Effect   = "Allow"
-        Action   = "s3:GetBucketAcl"
-        Resource = var.audit_logs_bucket_arn
-      }
-    ]
-  })
+data "aws_vpc" "default" {
+  count   = var.enabled ? 1 : 0
+  default = true
 }
 
-resource "aws_iam_role_policy_attachment" "config_managed" {
-  count = var.enabled ? 1 : 0
+resource "aws_ssm_service_setting" "block_public_sharing" {
+  count         = var.enabled ? 1 : 0
+  setting_id    = "/ssm/documents/console/public-sharing-permission"
+  setting_value = "Disable"
+}
 
-  role       = aws_iam_role.config[0].name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWS_ConfigRole"
+resource "aws_default_security_group" "default" {
+  count                  = var.enabled ? 1 : 0
+  vpc_id                 = data.aws_vpc.default[0].id
+  ingress                = []
+  egress                 = []
+  revoke_rules_on_delete = true
+}
+
+resource "aws_ebs_snapshot_block_public_access" "default" {
+
+
+  count = var.enabled ? 1 : 0
+  state = "block-all-sharing"
 }
 
 resource "aws_config_configuration_recorder" "main" {
+
   count = var.enabled ? 1 : 0
 
   name     = "${var.project_name}-recorder-${var.environment}"
-  role_arn = aws_iam_role.config[0].arn
+  role_arn = aws_iam_service_linked_role.config[0].arn
 
   recording_group {
     all_supported                 = true
@@ -77,6 +54,7 @@ resource "aws_config_configuration_recorder" "main" {
     recording_frequency = "DAILY"
   }
 }
+
 
 resource "aws_config_delivery_channel" "main" {
   count = var.enabled ? 1 : 0
@@ -107,23 +85,35 @@ resource "aws_securityhub_account" "main" {
   auto_enable_controls = true
 
   depends_on = [aws_config_configuration_recorder_status.main]
+
+  # 2-minute delay to allow Security Hub to fully initialize
+  provisioner "local-exec" {
+    command = "sleep 120"
+    when    = create
+  }
 }
 
-resource "aws_securityhub_standards_subscription" "cis" {
-  count = var.enabled ? 1 : 0
+# NOTE: Standards subscriptions are managed by Security Hub CSPM
+# We do not manage them here to avoid conflicts and state issues
+# If CSPM is enabled, standards are automatically subscribed
+# To manually manage standards, disable CSPM first
 
-  standards_arn = "arn:aws:securityhub:${data.aws_region.current[0].name}::standards/cis-aws-foundations-benchmark/v/1.4.0"
+# DEPRECATED - Replaced by Security Hub CSPM auto-subscription
+# resource "aws_securityhub_standards_subscription" "cis" {
+#   count = var.enabled ? 1 : 0
+#   standards_arn = "arn:aws:securityhub:${data.aws_region.current[0].name}::standards/cis-aws-foundations-benchmark/v/1.4.0"
+#   depends_on = [aws_securityhub_account.main]
+# }
 
-  depends_on = [aws_securityhub_account.main]
-}
+# DEPRECATED - Replaced by Security Hub CSPM auto-subscription
+# resource "aws_securityhub_standards_subscription" "aws_best_practices" {
+#   count = var.enabled ? 1 : 0
+#   standards_arn = "arn:aws:securityhub:${data.aws_region.current[0].name}::standards/aws-foundational-security-best-practices/v/1.0.0"
+#   depends_on = [aws_securityhub_account.main]
+# }
 
-resource "aws_securityhub_standards_subscription" "aws_best_practices" {
-  count = var.enabled ? 1 : 0
 
-  standards_arn = "arn:aws:securityhub:${data.aws_region.current[0].name}::standards/aws-foundational-security-best-practices/v/1.0.0"
 
-  depends_on = [aws_securityhub_account.main]
-}
 
 resource "aws_securityhub_product_subscription" "guardduty" {
   count = var.enabled && var.guardduty_enabled ? 1 : 0

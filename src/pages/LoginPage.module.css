@@ -89,3 +89,10 @@
 .eyeButton:hover {
   color: var(--color-text);
 }
+
+.mfaInstructions {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-md) 0;
+  text-align: center;
+}

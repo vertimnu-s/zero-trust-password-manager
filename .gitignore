@@ -103,6 +103,7 @@ Thumbs.db
 # LOCAL DOCUMENTATION (NOT in repo)
 # ============================================
 docs/
+mermaid/
 
 # ============================================
 # KEEP THESE IN REPO (documentation & templates)

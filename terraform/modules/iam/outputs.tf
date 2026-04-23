@@ -29,3 +29,5 @@ output "all_lambda_role_names" {
     delete = aws_iam_role.delete_password_role.name
   }
 }
+
+

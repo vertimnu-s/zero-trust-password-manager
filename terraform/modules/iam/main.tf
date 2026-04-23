@@ -193,12 +193,7 @@ resource "aws_iam_role_policy" "delete_password_policy" {
   })
 }
 
-# Optional: CloudWatch permission for X-Ray (if you want distributed tracing)
-# Uncomment to enable X-Ray tracing
-# resource "aws_iam_role_policy_attachment" "lambda_xray_write" {
-#   role       = aws_iam_role.create_password_role.name
-#   policy_arn = "arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess"
-# }
+
 
 # ========== AWS MANAGED POLICIES FOR LAMBDA BASIC EXECUTION ==========
 
@@ -224,19 +219,22 @@ resource "aws_iam_role_policy_attachment" "delete_lambda_basic_execution" {
 
 locals {
   kms_enabled = length(var.kms_key_arns) > 0
-  all_lambda_roles = [
-    aws_iam_role.create_password_role.name,
-    aws_iam_role.read_passwords_role.name,
-    aws_iam_role.update_password_role.name,
-    aws_iam_role.delete_password_role.name,
-  ]
+  lambda_role_names_by_key = {
+    create = aws_iam_role.create_password_role.name
+    read   = aws_iam_role.read_passwords_role.name
+    update = aws_iam_role.update_password_role.name
+    delete = aws_iam_role.delete_password_role.name
+  }
+  all_lambda_roles = values(local.lambda_role_names_by_key)
 }
+
 
 resource "aws_iam_role_policy" "kms_access" {
   count = local.kms_enabled ? length(local.all_lambda_roles) : 0
 
   name = "${var.project_name}-kms-access"
   role = local.all_lambda_roles[count.index]
+
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -257,10 +255,10 @@ resource "aws_iam_role_policy" "kms_access" {
 }
 
 resource "aws_iam_role_policy" "dlq_send" {
-  for_each = var.dlq_arns
+  for_each = { for k, v in var.dlq_arns : k => v if contains(keys(local.lambda_role_names_by_key), k) }
 
   name = "${var.project_name}-dlq-send-${each.key}"
-  role = local.all_lambda_roles[index(["create", "read", "update", "delete"], each.key)]
+  role = local.lambda_role_names_by_key[each.key]
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -274,3 +272,4 @@ resource "aws_iam_role_policy" "dlq_send" {
     ]
   })
 }
+

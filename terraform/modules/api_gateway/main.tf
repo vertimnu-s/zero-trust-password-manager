@@ -68,6 +68,7 @@ resource "aws_apigatewayv2_route" "delete_password" {
   authorizer_id      = aws_apigatewayv2_authorizer.cognito.id
 }
 
+
 # ========== LAMBDA INTEGRATIONS ==========
 
 resource "aws_apigatewayv2_integration" "create_password" {
@@ -97,6 +98,7 @@ resource "aws_apigatewayv2_integration" "delete_password" {
   payload_format_version = "2.0"
   integration_uri    = var.delete_lambda_function_arn
 }
+
 
 # ========== STAGE AND DEPLOYMENT ==========
 resource "aws_apigatewayv2_stage" "default" {
@@ -130,13 +132,14 @@ resource "aws_apigatewayv2_stage" "default" {
     Name = "${var.project_name}-stage-${var.api_stage_name}"
   }
 
-  depends_on = [
+    depends_on = [
     aws_apigatewayv2_route.create_password,
     aws_apigatewayv2_route.read_passwords,
     aws_apigatewayv2_route.update_password,
     aws_apigatewayv2_route.delete_password
   ]
 }
+
 
 # ========== LAMBDA PERMISSIONS FOR API GATEWAY INVOCATION ==========
 
@@ -171,3 +174,4 @@ resource "aws_lambda_permission" "delete_apigw" {
   principal      = "apigateway.amazonaws.com"
   source_arn     = "${aws_apigatewayv2_api.password_manager.execution_arn}/*/*"
 }
+
