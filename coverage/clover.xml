@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<coverage generated="1775984625895" clover="3.2.0">
-  <project timestamp="1775984625895" name="All files">
+<coverage generated="1779474061785" clover="3.2.0">
+  <project timestamp="1779474061785" name="All files">
     <metrics statements="118" coveredstatements="104" conditionals="62" coveredconditionals="55" methods="22" coveredmethods="19" elements="202" coveredelements="178" complexity="0" loc="118" ncloc="118" packages="2" files="3" classes="3"/>
     <package name="services">
       <metrics statements="105" coveredstatements="91" conditionals="52" coveredconditionals="45" methods="21" coveredmethods="18"/>
       <file name="crypto.ts" path="C:\Users\Vertimnus\zero-trust-password-manager\src\services\crypto.ts">
         <metrics statements="88" coveredstatements="74" conditionals="48" coveredconditionals="41" methods="19" coveredmethods="16"/>
-        <line num="2" count="30" type="stmt"/>
-        <line num="3" count="30" type="stmt"/>
-        <line num="11" count="30" type="stmt"/>
+        <line num="2" count="28" type="stmt"/>
+        <line num="3" count="28" type="stmt"/>
+        <line num="11" count="28" type="stmt"/>
         <line num="30" count="15" type="stmt"/>
         <line num="32" count="15" type="stmt"/>
         <line num="33" count="15" type="stmt"/>

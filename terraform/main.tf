@@ -18,8 +18,6 @@ module "cognito" {
   password_min_length = var.cognito_password_min_length
   mfa_enabled         = var.cognito_mfa_enabled
   enable_passkeys     = var.cognito_enable_passkeys
-
-  # Optional: Add field for preferred_username and email
   required_attributes = ["email", "preferred_username"]
 }
 
