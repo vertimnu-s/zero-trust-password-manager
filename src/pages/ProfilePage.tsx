@@ -199,7 +199,7 @@ const handleDisableMFA = async () => {
           <h2>Change Login Password</h2>
         </div>
         <p className={styles.description}>
-          This changes your Cognito login password. Your vault encryption master password is separate and managed within the vault.
+          This changes your Cognito login password. It does not affect the encryption of your stored vault items.
         </p>
         <div className={styles.form}>
           <Input
