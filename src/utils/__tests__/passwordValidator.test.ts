@@ -41,7 +41,6 @@ describe('validatePassword', () => {
   it('reports all missing requirements simultaneously', () => {
     const result = validatePassword('')
     expect(result.isValid).toBe(false)
-    // Should have at least 5 errors (length + upper + lower + digit + special)
     expect(result.errors.length).toBeGreaterThanOrEqual(5)
   })
 

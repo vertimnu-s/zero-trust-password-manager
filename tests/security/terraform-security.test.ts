@@ -1,21 +1,4 @@
 // @vitest-environment node
-
-/**
- * Terraform Security Validation
- *
- * Static analysis of Terraform HCL files to verify zero-trust security controls
- * are correctly configured. This runs locally with zero AWS cost.
- *
- * Checks:
- *   1. IAM policies follow least-privilege (no wildcard actions/resources)
- *   2. S3 buckets enforce public access blocks
- *   3. DynamoDB encryption is enabled
- *   4. Lambda security headers are present
- *   5. WAF rules are configured
- *   6. Cognito password policy is enforced
- *   7. No secrets/credentials hardcoded in Terraform files
- */
-
 import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, existsSync } from 'fs'
 import { join, resolve, dirname } from 'path'
@@ -39,26 +22,19 @@ function readAllTfFiles(dir: string): string {
     .join('\n')
 }
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 1. IAM Least-Privilege
-// ═══════════════════════════════════════════════════════════════════════════
-
 describe('Terraform: IAM Least-Privilege', () => {
   const iamContent = readAllTfFiles('modules/iam')
 
   it('no wildcard (*) in IAM Action fields', () => {
-    // Extract Action arrays — look for "Action = ["*"]" or "Action = "*""
     const wildcardAction = /Action\s*=\s*(\[?\s*"\*"\s*\]?|"\*")/g
     expect(iamContent).not.toMatch(wildcardAction)
   })
 
   it('no wildcard (*) in IAM Resource fields (except CloudWatch logs)', () => {
-    // CloudWatch log ARNs conventionally use wildcards; all others should not
     const lines = iamContent.split('\n')
     const resourceLines = lines.filter(
       (l) => l.includes('Resource') && l.includes('"*"') && !l.includes('logs:'),
     )
-    // Filter out CloudWatch log resource patterns
     const nonLogWildcards = resourceLines.filter(
       (l) => !l.includes('log-group') && !l.includes('logs'),
     )
@@ -67,7 +43,6 @@ describe('Terraform: IAM Least-Privilege', () => {
 
   it('each Lambda function has its own dedicated IAM role', () => {
     const roleNames = iamContent.match(/resource\s+"aws_iam_role"\s+"(\w+)"/g) || []
-    // Should have at least 4 roles (create, read, update, delete)
     expect(roleNames.length).toBeGreaterThanOrEqual(4)
   })
 
@@ -78,10 +53,6 @@ describe('Terraform: IAM Least-Privilege', () => {
     })
   })
 })
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 2. S3 Security
-// ═══════════════════════════════════════════════════════════════════════════
 
 describe('Terraform: S3 Security', () => {
   const s3Content = readAllTfFiles('modules/s3')
@@ -95,7 +66,6 @@ describe('Terraform: S3 Security', () => {
 
   it('server-side encryption is enabled', () => {
     expect(s3Content).toContain('apply_server_side_encryption_by_default')
-    // KMS or AES256
     expect(s3Content).toMatch(/sse_algorithm\s.*?(aws:kms|AES256)/)
   })
 
@@ -108,10 +78,6 @@ describe('Terraform: S3 Security', () => {
     expect(s3Content).toContain('expiration')
   })
 })
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 3. DynamoDB Security
-// ═══════════════════════════════════════════════════════════════════════════
 
 describe('Terraform: DynamoDB Security', () => {
   const dynamoContent = readAllTfFiles('modules/dynamodb')
@@ -130,10 +96,6 @@ describe('Terraform: DynamoDB Security', () => {
     expect(dynamoContent).toContain('"userId"')
   })
 })
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 4. Lambda Security Headers
-// ═══════════════════════════════════════════════════════════════════════════
 
 describe('Terraform: Lambda Security Headers', () => {
   const lambdaDir = join(TERRAFORM_DIR, 'lambda-functions')
@@ -155,10 +117,6 @@ describe('Terraform: Lambda Security Headers', () => {
     }
   })
 })
-
-// ═══════════════════════════════════════════════════════════════════════════
-// 5. WAF Configuration
-// ═══════════════════════════════════════════════════════════════════════════
 
 describe('Terraform: WAF Configuration', () => {
   const wafContent = readAllTfFiles('modules/waf')
@@ -188,10 +146,6 @@ describe('Terraform: WAF Configuration', () => {
   })
 })
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 6. Cognito Password Policy
-// ═══════════════════════════════════════════════════════════════════════════
-
 describe('Terraform: Cognito Security', () => {
   const cognitoContent = readAllTfFiles('modules/cognito')
 
@@ -213,10 +167,6 @@ describe('Terraform: Cognito Security', () => {
   })
 })
 
-// ═══════════════════════════════════════════════════════════════════════════
-// 7. No Hardcoded Secrets
-// ═══════════════════════════════════════════════════════════════════════════
-
 describe('Terraform: No Hardcoded Secrets', () => {
   it('no AWS access keys in any .tf file', () => {
     const allTf = [
@@ -226,9 +176,7 @@ describe('Terraform: No Hardcoded Secrets', () => {
       + readAllTfFiles('modules/lambda')
       + readAllTfFiles('modules/cognito')
 
-    // AWS access key pattern: AKIA followed by 16 uppercase alphanumeric chars
     expect(allTf).not.toMatch(/AKIA[A-Z0-9]{16}/)
-    // AWS secret key: 40 chars base64-like
     expect(allTf).not.toMatch(/[A-Za-z0-9/+=]{40}(?=\s|"|$)/)
   })
 

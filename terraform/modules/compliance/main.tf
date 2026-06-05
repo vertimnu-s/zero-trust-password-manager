@@ -86,31 +86,14 @@ resource "aws_securityhub_account" "main" {
 
   depends_on = [aws_config_configuration_recorder_status.main]
 
-  # 2-minute delay to allow Security Hub to fully initialize
   provisioner "local-exec" {
     command = "sleep 120"
     when    = create
   }
 }
 
-# NOTE: Standards subscriptions are managed by Security Hub CSPM
-# We do not manage them here to avoid conflicts and state issues
-# If CSPM is enabled, standards are automatically subscribed
-# To manually manage standards, disable CSPM first
 
-# DEPRECATED - Replaced by Security Hub CSPM auto-subscription
-# resource "aws_securityhub_standards_subscription" "cis" {
-#   count = var.enabled ? 1 : 0
-#   standards_arn = "arn:aws:securityhub:${data.aws_region.current[0].name}::standards/cis-aws-foundations-benchmark/v/1.4.0"
-#   depends_on = [aws_securityhub_account.main]
-# }
 
-# DEPRECATED - Replaced by Security Hub CSPM auto-subscription
-# resource "aws_securityhub_standards_subscription" "aws_best_practices" {
-#   count = var.enabled ? 1 : 0
-#   standards_arn = "arn:aws:securityhub:${data.aws_region.current[0].name}::standards/aws-foundational-security-best-practices/v/1.0.0"
-#   depends_on = [aws_securityhub_account.main]
-# }
 
 
 

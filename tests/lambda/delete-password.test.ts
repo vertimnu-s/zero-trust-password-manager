@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// ── Mock AWS SDK ────────────────────────────────────────────────────────────
-
 const mockDynamoSend = vi.fn()
 const mockS3Send = vi.fn()
 
@@ -18,8 +16,6 @@ const { handler } = await import(
   '../../terraform/lambda-functions/delete-password/index.js'
 )
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-
 function makeEvent(overrides = {}) {
   return {
     requestContext: {
@@ -29,8 +25,6 @@ function makeEvent(overrides = {}) {
     ...overrides,
   }
 }
-
-// ── Tests ───────────────────────────────────────────────────────────────────
 
 describe('delete-password Lambda', () => {
   beforeEach(() => {

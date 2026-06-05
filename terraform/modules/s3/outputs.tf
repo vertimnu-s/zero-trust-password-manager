@@ -1,5 +1,3 @@
-# S3 Module Outputs
-
 output "audit_logs_bucket_name" {
   description = "Name of the S3 bucket for audit logs"
   value       = aws_s3_bucket.audit_logs.id

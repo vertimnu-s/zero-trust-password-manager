@@ -13,8 +13,6 @@ describe('checkPasswordBreach', () => {
   })
 
   it('returns breach count when password hash suffix is found', async () => {
-    // SHA-1 of "password" = 5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8
-    // prefix = 5BAA6, suffix = 1E4C9B93F3F0682250B6CF8331B7EE68FD8
     globalThis.fetch = vi.fn().mockResolvedValue({
       ok: true,
       text: async () =>
@@ -26,7 +24,6 @@ describe('checkPasswordBreach', () => {
     const count = await checkPasswordBreach('password')
     expect(count).toBe(9659365)
     expect(globalThis.fetch).toHaveBeenCalledTimes(1)
-    // Verify k-anonymity: only the 5-char prefix is sent to the API
     const mockFetch = vi.mocked(globalThis.fetch)
     const callUrl = mockFetch.mock.calls[0][0]
     expect(callUrl).toBe('https://api.pwnedpasswords.com/range/5BAA6')
@@ -75,7 +72,6 @@ describe('checkPasswordBreach', () => {
     await checkPasswordBreach('anything')
     const mockFetch = vi.mocked(globalThis.fetch)
     const callUrl = mockFetch.mock.calls[0][0] as string
-    // URL should match /range/XXXXX where X is a hex char
     expect(callUrl).toMatch(/\/range\/[0-9A-F]{5}$/)
   })
 })

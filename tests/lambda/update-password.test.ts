@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// ── Mock AWS SDK ────────────────────────────────────────────────────────────
-
 const mockDynamoSend = vi.fn()
 const mockS3Send = vi.fn()
 
@@ -20,8 +18,6 @@ const { handler } = await import(
   '../../terraform/lambda-functions/update-password/index.js'
 )
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-
 function makeEvent(bodyOverrides = {}) {
   return {
     requestContext: {
@@ -38,8 +34,6 @@ function makeEvent(bodyOverrides = {}) {
     }),
   }
 }
-
-// ── Tests ───────────────────────────────────────────────────────────────────
 
 describe('update-password Lambda', () => {
   beforeEach(() => {
@@ -85,7 +79,6 @@ describe('update-password Lambda', () => {
     const event = makeEvent()
     const res = await handler(event)
     expect(res.statusCode).toBe(200)
-    // Should use UpdateItemCommand (1 call), not delete+put
     expect(mockDynamoSend).toHaveBeenCalledTimes(1)
     const cmd = mockDynamoSend.mock.calls[0][0]
     expect(cmd._type).toBe('UpdateItem')
@@ -99,7 +92,6 @@ describe('update-password Lambda', () => {
     })
     const res = await handler(event)
     expect(res.statusCode).toBe(200)
-    // delete old + put new = 2 DynamoDB calls
     expect(mockDynamoSend).toHaveBeenCalledTimes(2)
     expect(mockDynamoSend.mock.calls[0][0]._type).toBe('DeleteItem')
     expect(mockDynamoSend.mock.calls[1][0]._type).toBe('PutItem')

@@ -1,9 +1,5 @@
-# Lambda Module - Deploys Lambda functions for password vault operations
-
-
 data "aws_caller_identity" "current" {}
 
-# ========== ARCHIVE/ZIP LAMBDA SOURCE CODE ==========
 
 data "archive_file" "create_password_zip" {
   type        = "zip"
@@ -31,7 +27,6 @@ data "archive_file" "delete_password_zip" {
 
 
 
-# ========== 1. CREATE PASSWORD LAMBDA ==========
 resource "aws_lambda_function" "create_password" {
   filename         = data.archive_file.create_password_zip.output_path
   source_code_hash = data.archive_file.create_password_zip.output_base64sha256
@@ -72,7 +67,6 @@ resource "aws_lambda_function" "create_password" {
   }
 }
 
-# ========== 2. READ PASSWORDS LAMBDA ==========
 resource "aws_lambda_function" "read_passwords" {
   filename         = data.archive_file.read_passwords_zip.output_path
   source_code_hash = data.archive_file.read_passwords_zip.output_base64sha256
@@ -113,7 +107,6 @@ resource "aws_lambda_function" "read_passwords" {
   }
 }
 
-# ========== 3. UPDATE PASSWORD LAMBDA ==========
 resource "aws_lambda_function" "update_password" {
   filename         = data.archive_file.update_password_zip.output_path
   source_code_hash = data.archive_file.update_password_zip.output_base64sha256
@@ -154,7 +147,6 @@ resource "aws_lambda_function" "update_password" {
   }
 }
 
-# ========== 4. DELETE PASSWORD LAMBDA ==========
 resource "aws_lambda_function" "delete_password" {
   filename         = data.archive_file.delete_password_zip.output_path
   source_code_hash = data.archive_file.delete_password_zip.output_base64sha256
@@ -194,6 +186,3 @@ resource "aws_lambda_function" "delete_password" {
     Function = "DeletePassword"
   }
 }
-
-
-

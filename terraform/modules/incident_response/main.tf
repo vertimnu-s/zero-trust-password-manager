@@ -1,13 +1,3 @@
-# Automated Incident Response — auto-blocks attacker IPs via WAF
-# and disables compromised Cognito users based on GuardDuty findings.
-#
-# Cost impact: $0 additional
-# - Lambda: free tier (1M invocations/month)
-# - WAF IP set: included with existing WAF
-# - EventBridge: free
-# - SQS DLQ: free tier
-# - SNS: already exists, no new topics
-
 terraform {
   required_providers {
     aws = {
@@ -17,7 +7,6 @@ terraform {
   }
 }
 
-# ========== WAF IP Set (us-east-1 for CLOUDFRONT scope) ==========
 resource "aws_wafv2_ip_set" "blocked_ips" {
   provider = aws.us_east_1
   count    = var.enabled ? 1 : 0
@@ -33,7 +22,6 @@ resource "aws_wafv2_ip_set" "blocked_ips" {
   }
 }
 
-# ========== DLQ for failed remediation invocations ==========
 resource "aws_sqs_queue" "remediation_dlq" {
   count = var.enabled ? 1 : 0
 
@@ -43,7 +31,6 @@ resource "aws_sqs_queue" "remediation_dlq" {
   tags = { Name = "${var.project_name}-remediation-dlq" }
 }
 
-# ========== IAM Role ==========
 resource "aws_iam_role" "remediation_role" {
   count = var.enabled ? 1 : 0
 
@@ -112,7 +99,6 @@ resource "aws_iam_role_policy" "remediation_policy" {
   })
 }
 
-# ========== CloudWatch Log Group ==========
 resource "aws_cloudwatch_log_group" "remediation" {
   count = var.enabled ? 1 : 0
 
@@ -120,7 +106,6 @@ resource "aws_cloudwatch_log_group" "remediation" {
   retention_in_days = var.log_retention_days
 }
 
-# ========== Lambda Function ==========
 data "archive_file" "remediation_zip" {
   count = var.enabled ? 1 : 0
 
@@ -160,7 +145,6 @@ resource "aws_lambda_function" "remediation" {
   ]
 }
 
-# ========== EventBridge Rule — GuardDuty findings MEDIUM+ ==========
 resource "aws_cloudwatch_event_rule" "guardduty_remediation" {
   count = var.enabled ? 1 : 0
 

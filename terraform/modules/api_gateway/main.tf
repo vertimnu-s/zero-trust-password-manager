@@ -1,8 +1,5 @@
-# API Gateway Module - HTTP API with JWT Authorizer
-
 data "aws_caller_identity" "current" {}
 
-# ========== CREATE HTTP API ==========
 resource "aws_apigatewayv2_api" "password_manager" {
   name          = "${var.project_name}-api-${var.environment}"
   protocol_type = "HTTP"
@@ -21,7 +18,6 @@ resource "aws_apigatewayv2_api" "password_manager" {
   }
 }
 
-# ========== JWT AUTHORIZER FOR COGNITO ==========
 resource "aws_apigatewayv2_authorizer" "cognito" {
   api_id           = aws_apigatewayv2_api.password_manager.id
   authorizer_type  = "JWT"
@@ -34,7 +30,6 @@ resource "aws_apigatewayv2_authorizer" "cognito" {
   }
 }
 
-# ========== CREATE ROUTES FOR LAMBDA FUNCTIONS ==========
 
 resource "aws_apigatewayv2_route" "create_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
@@ -69,7 +64,6 @@ resource "aws_apigatewayv2_route" "delete_password" {
 }
 
 
-# ========== LAMBDA INTEGRATIONS ==========
 
 resource "aws_apigatewayv2_integration" "create_password" {
   api_id             = aws_apigatewayv2_api.password_manager.id
@@ -100,7 +94,6 @@ resource "aws_apigatewayv2_integration" "delete_password" {
 }
 
 
-# ========== STAGE AND DEPLOYMENT ==========
 resource "aws_apigatewayv2_stage" "default" {
   api_id = aws_apigatewayv2_api.password_manager.id
   
@@ -141,7 +134,6 @@ resource "aws_apigatewayv2_stage" "default" {
 }
 
 
-# ========== LAMBDA PERMISSIONS FOR API GATEWAY INVOCATION ==========
 
 resource "aws_lambda_permission" "create_apigw" {
   statement_id   = "AllowAPIGatewayInvoke"
@@ -174,4 +166,3 @@ resource "aws_lambda_permission" "delete_apigw" {
   principal      = "apigateway.amazonaws.com"
   source_arn     = "${aws_apigatewayv2_api.password_manager.execution_arn}/*/*"
 }
-

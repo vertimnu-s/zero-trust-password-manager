@@ -2,7 +2,6 @@ data "aws_caller_identity" "current" {
   count = var.enabled ? 1 : 0
 }
 
-# S3 bucket for CloudTrail logs
 resource "aws_s3_bucket" "trail_logs" {
   count = var.enabled ? 1 : 0
 
@@ -51,7 +50,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "trail_logs" {
   }
 }
 
-# Bucket policy — CloudTrail requires explicit write permission
 resource "aws_s3_bucket_policy" "trail_logs" {
   count  = var.enabled ? 1 : 0
   bucket = aws_s3_bucket.trail_logs[0].id
@@ -80,7 +78,6 @@ resource "aws_s3_bucket_policy" "trail_logs" {
   })
 }
 
-# The trail itself — captures management events (free) and data events (paid, minimal)
 resource "aws_cloudtrail" "main" {
   count = var.enabled ? 1 : 0
 
@@ -101,4 +98,3 @@ resource "aws_cloudtrail" "main" {
 
   depends_on = [aws_s3_bucket_policy.trail_logs]
 }
-

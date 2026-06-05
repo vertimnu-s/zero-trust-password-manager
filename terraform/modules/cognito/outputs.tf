@@ -1,5 +1,3 @@
-# Cognito Module Outputs - Values needed by other modules and frontend
-
 output "user_pool_id" {
   description = "Cognito User Pool ID (needed for VITE_COGNITO_USER_POOL_ID)"
   value       = aws_cognito_user_pool.main.id

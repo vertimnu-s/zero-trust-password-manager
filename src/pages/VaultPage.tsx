@@ -289,6 +289,21 @@ function VaultPage() {
     addToast("Vault locked and keys cleared from memory", "info");
   };
 
+  const getMasterPasswordForItemView = async (item: VaultItem): Promise<string> => {
+    if (masterPassword && !item.requireMasterPassword) {
+      return masterPassword;
+    }
+    return promptMasterPasswordForDecryption();
+  };
+
+  const getItemViewAction = (item: VaultItem) => {
+    const canViewFromUnlockedVault = Boolean(masterPassword) && !item.requireMasterPassword;
+    return {
+      label: canViewFromUnlockedVault ? "View" : "Decrypt",
+      icon: canViewFromUnlockedVault ? <Eye size={14} /> : <Unlock size={14} />,
+    };
+  };
+
   const handleDecrypt = async (item: VaultItem) => {
     if (lockoutUntil && Date.now() < lockoutUntil) {
       const remaining = Math.ceil((lockoutUntil - Date.now()) / 1000);
@@ -297,7 +312,7 @@ function VaultPage() {
     }
 
     try {
-      const passw = await promptMasterPasswordForDecryption();
+      const passw = await getMasterPasswordForItemView(item);
       if (!passw) {
         auditLogger.log({ action: 'password_decrypt', site: item.site, username: item.username, success: false, details: 'Master password not provided' });
         return;
@@ -543,7 +558,7 @@ function VaultPage() {
     if (!selectedItem) return;
 
     try {
-      const passw = await promptMasterPasswordForDecryption();
+      const passw = await getMasterPasswordForItemView(selectedItem);
       if (!passw) return;
 
       const plain = await decryptPassword(selectedItem.cipherText, selectedItem.iv, selectedItem.salt, passw, selectedItem.site);
@@ -868,62 +883,66 @@ function VaultPage() {
         </div>
       ) : (
         <div className={styles.itemList}>
-          {filteredItems.map((item) => (
-            <div key={item.id} className={styles.item}>
-              <div className={styles.itemHeader}>
-                <div className={styles.itemInfo}>
-                  {item.category === "secure note" && <FileText size={14} className={styles.itemCategoryIcon} />}
-                  {item.category === "card" && <CreditCard size={14} className={styles.itemCategoryIcon} />}
-                  {item.category === "identity" && <User size={14} className={styles.itemCategoryIcon} />}
-                  {item.category === "login" && <KeyRound size={14} className={styles.itemCategoryIcon} />}
-                  <span className={styles.itemSite}>{item.site}</span>
-                  <span className={styles.itemBadge}>{item.category}</span>
-                  {item.folder && (
-                    <span className={styles.itemFolder}>
-                      <FolderOpen size={12} /> {item.folder}
-                    </span>
-                  )}
-                  {item.favorite && <Star size={14} className={styles.itemFav} fill="currentColor" />}
-                  {item.requireMasterPassword && (
-                    <span className={styles.itemMaster}><Shield size={12} /> Master</span>
-                  )}
+          {filteredItems.map((item) => {
+            const viewAction = getItemViewAction(item);
+
+            return (
+              <div key={item.id} className={styles.item}>
+                <div className={styles.itemHeader}>
+                  <div className={styles.itemInfo}>
+                    {item.category === "secure note" && <FileText size={14} className={styles.itemCategoryIcon} />}
+                    {item.category === "card" && <CreditCard size={14} className={styles.itemCategoryIcon} />}
+                    {item.category === "identity" && <User size={14} className={styles.itemCategoryIcon} />}
+                    {item.category === "login" && <KeyRound size={14} className={styles.itemCategoryIcon} />}
+                    <span className={styles.itemSite}>{item.site}</span>
+                    <span className={styles.itemBadge}>{item.category}</span>
+                    {item.folder && (
+                      <span className={styles.itemFolder}>
+                        <FolderOpen size={12} /> {item.folder}
+                      </span>
+                    )}
+                    {item.favorite && <Star size={14} className={styles.itemFav} fill="currentColor" />}
+                    {item.requireMasterPassword && (
+                      <span className={styles.itemMaster}><Shield size={12} /> Master</span>
+                    )}
+                  </div>
+                  <div className={styles.itemActions}>
+                    <Button variant="ghost" size="sm" icon={<Star size={14} fill={item.favorite ? "currentColor" : "none"} />} onClick={() => handleToggleFavorite(item)} />
+                    <Button variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => handleEdit(item)} />
+                    <Button variant="ghost" size="sm" icon={<Info size={14} />} onClick={() => openItemModal(item)} />
+                    <Button variant="ghost" size="sm" icon={<Trash2 size={14} />} onClick={() => handleDelete(item)} />
+                  </div>
                 </div>
-                <div className={styles.itemActions}>
-                  <Button variant="ghost" size="sm" icon={<Star size={14} fill={item.favorite ? "currentColor" : "none"} />} onClick={() => handleToggleFavorite(item)} />
-                  <Button variant="ghost" size="sm" icon={<Pencil size={14} />} onClick={() => handleEdit(item)} />
-                  <Button variant="ghost" size="sm" icon={<Info size={14} />} onClick={() => openItemModal(item)} />
-                  <Button variant="ghost" size="sm" icon={<Trash2 size={14} />} onClick={() => handleDelete(item)} />
-                </div>
-              </div>
-              <div className={styles.itemBody}>
-                {item.category === "secure note" ? (
-                  <span className={styles.itemUsername}>Encrypted note</span>
-                ) : (
-                  <span className={styles.itemUsername}>{item.username}</span>
-                )}
-                <div className={styles.itemPasswordActions}>
-                  {item.category !== "secure note" && (
-                    <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => handleCopy(item.username)}>{item.category === "card" ? "Cardholder" : item.category === "identity" ? "Name" : "Username"}</Button>
-                  )}
-                  {decrypted[item.id] ? (
-                    <>
-                      <Button variant="ghost" size="sm" icon={showPassword[item.id] ? <EyeOff size={14} /> : <Eye size={14} />} onClick={() => setShowPassword((s) => ({ ...s, [item.id]: !s[item.id] }))}>
-                        {showPassword[item.id] ? "Hide" : "Show"}
-                      </Button>
-                      {item.category === "login" && (
-                        <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => handleCopy(decrypted[item.id], 'password')}>Password</Button>
-                      )}
-                    </>
+                <div className={styles.itemBody}>
+                  {item.category === "secure note" ? (
+                    <span className={styles.itemUsername}>Encrypted note</span>
                   ) : (
-                    <Button variant="secondary" size="sm" icon={<Unlock size={14} />} onClick={() => handleDecrypt(item)}>Decrypt</Button>
+                    <span className={styles.itemUsername}>{item.username}</span>
                   )}
+                  <div className={styles.itemPasswordActions}>
+                    {item.category !== "secure note" && (
+                      <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => handleCopy(item.username)}>{item.category === "card" ? "Cardholder" : item.category === "identity" ? "Name" : "Username"}</Button>
+                    )}
+                    {decrypted[item.id] ? (
+                      <>
+                        <Button variant="ghost" size="sm" icon={showPassword[item.id] ? <EyeOff size={14} /> : <Eye size={14} />} onClick={() => setShowPassword((s) => ({ ...s, [item.id]: !s[item.id] }))}>
+                          {showPassword[item.id] ? "Hide" : "Show"}
+                        </Button>
+                        {item.category === "login" && (
+                          <Button variant="ghost" size="sm" icon={<Copy size={14} />} onClick={() => handleCopy(decrypted[item.id], 'password')}>Password</Button>
+                        )}
+                      </>
+                    ) : (
+                      <Button variant="secondary" size="sm" icon={viewAction.icon} onClick={() => handleDecrypt(item)}>{viewAction.label}</Button>
+                    )}
+                  </div>
                 </div>
+                {showPassword[item.id] && decrypted[item.id] && (
+                  <div className={styles.revealedPassword}>{formatDecryptedValue(decrypted[item.id], item.category)}</div>
+                )}
               </div>
-              {showPassword[item.id] && decrypted[item.id] && (
-                <div className={styles.revealedPassword}>{formatDecryptedValue(decrypted[item.id], item.category)}</div>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -964,7 +983,11 @@ function VaultPage() {
               <div className={styles.modalPasswordValue}>{modalPassword ? formatDecryptedValue(modalPassword, selectedItem.category) : '••••••••'}</div>
             </div>
             <div className={styles.modalActions}>
-              {!modalPassword && <Button variant="secondary" size="sm" icon={<Eye size={14} />} onClick={handleModalRevealPassword}>Reveal</Button>}
+              {!modalPassword && (
+                <Button variant="secondary" size="sm" icon={getItemViewAction(selectedItem).icon} onClick={handleModalRevealPassword}>
+                  {getItemViewAction(selectedItem).label}
+                </Button>
+              )}
               <Button variant="secondary" size="sm" icon={<Pencil size={14} />} onClick={() => { handleEdit(selectedItem); closeItemModal(); }}>Edit</Button>
               <Button variant="ghost" size="sm" onClick={closeItemModal}>Close</Button>
             </div>

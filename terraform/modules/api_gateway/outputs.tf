@@ -1,5 +1,3 @@
-# API Gateway Module Outputs
-
 output "api_id" {
   description = "API Gateway HTTP API ID"
   value       = aws_apigatewayv2_api.password_manager.id
