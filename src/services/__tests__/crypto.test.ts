@@ -11,8 +11,6 @@ import {
   AuditLogger,
 } from '../crypto'
 
-// ── Key Derivation ──────────────────────────────────────────────────────────
-
 describe('generateKeyFromPassword', () => {
   it('derives a CryptoKey from password and salt', async () => {
     const salt = crypto.getRandomValues(new Uint8Array(16))
@@ -24,7 +22,6 @@ describe('generateKeyFromPassword', () => {
 
   it('produces same key for same password + salt', async () => {
     const salt = crypto.getRandomValues(new Uint8Array(16))
-    // Export both keys to compare raw bytes
     const raw1 = await crypto.subtle.exportKey('raw', await reDerive('TestPassword123!', salt))
     const raw2 = await crypto.subtle.exportKey('raw', await reDerive('TestPassword123!', salt))
     expect(Buffer.from(raw1).toString('hex')).toBe(Buffer.from(raw2).toString('hex'))
@@ -46,7 +43,6 @@ describe('generateKeyFromPassword', () => {
   })
 })
 
-// Helper: derive an exportable key (the source fn creates non-exportable keys)
 async function reDerive(password: string, salt: Uint8Array) {
   const enc = new TextEncoder()
   const keyMaterial = await crypto.subtle.importKey(
@@ -56,12 +52,10 @@ async function reDerive(password: string, salt: Uint8Array) {
     { name: 'PBKDF2', salt, iterations: 100000, hash: 'SHA-256' } as Pbkdf2Params,
     keyMaterial,
     { name: 'AES-GCM', length: 256 } as AesKeyGenParams,
-    true,          // extractable – for comparison only
+    true,
     ['encrypt', 'decrypt'],
   )
 }
-
-// ── Encrypt / Decrypt Round-Trip ────────────────────────────────────────────
 
 describe('encryptPassword / decryptPassword', () => {
   const masterPassword = 'MyStr0ng!Master#Pass'
@@ -127,7 +121,6 @@ describe('encryptPassword / decryptPassword', () => {
 
   it('fails decryption with tampered ciphertext', async () => {
     const { cipherText, iv, salt } = await encryptPassword('secret', masterPassword, context)
-    // Flip a byte in the ciphertext
     const raw = atob(cipherText)
     const tampered = btoa(
       String.fromCharCode(raw.charCodeAt(0) ^ 0xff) + raw.slice(1),
@@ -137,8 +130,6 @@ describe('encryptPassword / decryptPassword', () => {
     ).rejects.toThrow('Decryption failed')
   })
 })
-
-// ── Master Password Validation ──────────────────────────────────────────────
 
 describe('validateMasterPassword', () => {
   it('accepts a strong password', () => {
@@ -196,8 +187,6 @@ describe('validateMasterPassword', () => {
   })
 })
 
-// ── Secure Password Generator ───────────────────────────────────────────────
-
 describe('generateSecurePassword', () => {
   it('generates a password of the requested length', () => {
     const pw = generateSecurePassword({
@@ -211,7 +200,7 @@ describe('generateSecurePassword', () => {
   })
 
   it('includes at least one character from each selected set', () => {
-    for (let i = 0; i < 50; i++) {  // probabilistic — run 50 times
+    for (let i = 0; i < 50; i++) {
       const pw = generateSecurePassword({
         length: 16,
         includeLower: true,
@@ -266,8 +255,6 @@ describe('generateSecurePassword', () => {
   })
 })
 
-// ── Input Sanitization ──────────────────────────────────────────────────────
-
 describe('sanitizeInput', () => {
   it('passes through clean input unchanged', () => {
     expect(sanitizeInput('hello world')).toBe('hello world')
@@ -280,7 +267,6 @@ describe('sanitizeInput', () => {
   it('strips control characters', () => {
     const result = sanitizeInput('\x00\x01\x02\x03visible')
     expect(result).toBe('visible')
-    // Only chars with charCode >= 32 survive
     expect(sanitizeInput('a\x01b\x02c')).toBe('abc')
   })
 
@@ -300,8 +286,6 @@ describe('sanitizeInput', () => {
     expect(() => sanitizeInput(123 as unknown as string)).toThrow('Input must be a string')
   })
 })
-
-// ── Site Validation ─────────────────────────────────────────────────────────
 
 describe('validateSite', () => {
   it.each([
@@ -325,8 +309,6 @@ describe('validateSite', () => {
   })
 })
 
-// ── Username Validation ─────────────────────────────────────────────────────
-
 describe('validateUsername', () => {
   it.each([
     'alice',
@@ -348,8 +330,6 @@ describe('validateUsername', () => {
     expect(validateUsername(username)).toBe(false)
   })
 })
-
-// ── Audit Logger ────────────────────────────────────────────────────────────
 
 describe('AuditLogger', () => {
   let logger: AuditLogger

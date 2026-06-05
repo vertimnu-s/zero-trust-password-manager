@@ -1,5 +1,3 @@
-# GuardDuty — continuously monitors for threats across the AWS account.
-
 resource "aws_guardduty_detector" "main" {
   count = var.enabled ? 1 : 0
 
@@ -47,9 +45,7 @@ resource "aws_guardduty_detector_feature" "eks_runtime" {
 
 
 
-# SNS topic — central notification channel for all security alerts.
 
-# GuardDuty findings, CloudWatch alarms, and WAF alerts all route here.
 resource "aws_sns_topic" "security_alerts" {
   count = var.enabled ? 1 : 0
 
@@ -68,7 +64,6 @@ resource "aws_sns_topic_subscription" "email" {
   endpoint  = var.alert_email
 }
 
-# SNS topic policy — allows EventBridge and CloudWatch to publish to the topic
 resource "aws_sns_topic_policy" "security_alerts" {
   count = var.enabled ? 1 : 0
 
@@ -95,8 +90,6 @@ resource "aws_sns_topic_policy" "security_alerts" {
   })
 }
 
-# EventBridge rule — routes GuardDuty findings (medium+ severity) to SNS.
-# Severity >= 4.0 covers MEDIUM and HIGH findings, filtering out LOW noise.
 resource "aws_cloudwatch_event_rule" "guardduty_findings" {
   count = var.enabled ? 1 : 0
 

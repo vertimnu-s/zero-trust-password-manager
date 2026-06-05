@@ -1,5 +1,3 @@
-# CloudWatch Module Outputs
-
 output "create_log_group_name" {
   description = "CloudWatch Log Group name for create password Lambda"
   value       = aws_cloudwatch_log_group.create_password.name
@@ -42,5 +40,3 @@ output "log_group_names" {
     api_gateway = aws_cloudwatch_log_group.api_gateway.name
   }
 }
-
-

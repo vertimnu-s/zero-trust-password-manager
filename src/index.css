@@ -7,49 +7,34 @@
 }
 
 :root {
-  /* Core palette */
-  --color-blue-slate: #5e747f;
+--color-blue-slate: #5e747f;
   --color-lavender: #cfd6ea;
   --color-terracotta: #a76d60;
   --color-black: #000000;
   --color-shadow: #1a181b;
-
-  /* Derived surfaces */
-  --color-surface: #242228;
+--color-surface: #242228;
   --color-surface-hover: #2e2c32;
   --color-surface-active: #383640;
-
-  /* Borders */
-  --color-border: #333038;
+--color-border: #333038;
   --color-border-focus: var(--color-blue-slate);
-
-  /* Semantic */
-  --color-primary: var(--color-terracotta);
+--color-primary: var(--color-terracotta);
   --color-primary-hover: #b87a6d;
   --color-primary-active: #966054;
   --color-secondary: var(--color-blue-slate);
   --color-bg: var(--color-shadow);
-
-  /* Text */
-  --color-text: var(--color-lavender);
+--color-text: var(--color-lavender);
   --color-text-secondary: var(--color-blue-slate);
   --color-text-muted: #706c75;
-
-  /* Status */
-  --color-danger: #c45050;
+--color-danger: #c45050;
   --color-success: #4a9e6e;
   --color-warning: #c49a3c;
-
-  /* Spacing */
-  --space-xs: 4px;
+--space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
   --space-xl: 32px;
   --space-2xl: 48px;
-
-  /* Typography */
-  --font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+--font-sans: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'Fira Code', 'Cascadia Code', Consolas, monospace;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;
@@ -58,21 +43,15 @@
   --font-size-xl: 1.25rem;
   --font-size-2xl: 1.5rem;
   --font-size-3xl: 2rem;
-
-  /* Radius */
-  --radius-sm: 4px;
+--radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
   --radius-xl: 16px;
   --radius-full: 9999px;
-
-  /* Shadows */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+--shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-
-  /* Transitions */
-  --transition-fast: 150ms ease;
+--transition-fast: 150ms ease;
   --transition-normal: 250ms ease;
   --transition-slow: 350ms ease;
 }

@@ -1,5 +1,3 @@
-# Lambda Module Outputs
-
 output "create_password_function_arn" {
   description = "ARN of create password Lambda function"
   value       = aws_lambda_function.create_password.arn
@@ -40,4 +38,3 @@ output "delete_password_function_name" {
   description = "Name of delete password Lambda function"
   value       = aws_lambda_function.delete_password.function_name
 }
-

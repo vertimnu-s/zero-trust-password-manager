@@ -1,6 +1,3 @@
-# IAM Module - Least-privilege roles and policies for Lambda functions
-
-# ========== TRUST POLICY ==========
 locals {
   lambda_trust_policy = {
     Version = "2012-10-17"
@@ -16,7 +13,6 @@ locals {
   }
 }
 
-# ========== 1. CREATE PASSWORD LAMBDA ROLE ==========
 resource "aws_iam_role" "create_password_role" {
   name               = "${var.project_name}-create-password-role-${var.environment}"
   assume_role_policy = jsonencode(local.lambda_trust_policy)
@@ -59,7 +55,6 @@ resource "aws_iam_role_policy" "create_password_policy" {
   })
 }
 
-# ========== 2. READ PASSWORDS LAMBDA ROLE ==========
 resource "aws_iam_role" "read_passwords_role" {
   name               = "${var.project_name}-read-passwords-role-${var.environment}"
   assume_role_policy = jsonencode(local.lambda_trust_policy)
@@ -103,7 +98,6 @@ resource "aws_iam_role_policy" "read_passwords_policy" {
   })
 }
 
-# ========== 3. UPDATE PASSWORD LAMBDA ROLE ==========
 resource "aws_iam_role" "update_password_role" {
   name               = "${var.project_name}-update-password-role-${var.environment}"
   assume_role_policy = jsonencode(local.lambda_trust_policy)
@@ -149,7 +143,6 @@ resource "aws_iam_role_policy" "update_password_policy" {
   })
 }
 
-# ========== 4. DELETE PASSWORD LAMBDA ROLE ==========
 resource "aws_iam_role" "delete_password_role" {
   name               = "${var.project_name}-delete-password-role-${var.environment}"
   assume_role_policy = jsonencode(local.lambda_trust_policy)
@@ -195,7 +188,6 @@ resource "aws_iam_role_policy" "delete_password_policy" {
 
 
 
-# ========== AWS MANAGED POLICIES FOR LAMBDA BASIC EXECUTION ==========
 
 resource "aws_iam_role_policy_attachment" "create_lambda_basic_execution" {
   role       = aws_iam_role.create_password_role.name
@@ -272,4 +264,3 @@ resource "aws_iam_role_policy" "dlq_send" {
     ]
   })
 }
-

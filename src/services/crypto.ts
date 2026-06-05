@@ -102,7 +102,6 @@ export function validateMasterPassword(password: string): { isValid: boolean; er
     errors.push("Password must contain at least one special character");
   }
 
-  // Check for common patterns
   if (/(.)\1{2,}/.test(password)) {
     errors.push("Password should not contain repeated characters");
   }
@@ -121,16 +120,13 @@ export async function secureCopyToClipboard(text: string, autoClearMs: number = 
   try {
     await navigator.clipboard.writeText(text);
 
-    // Auto-clear clipboard after specified time
     setTimeout(async () => {
       try {
-        // Only clear if the clipboard still contains our text (to avoid clearing user content)
         const currentClipboard = await navigator.clipboard.readText();
         if (currentClipboard === text) {
           await navigator.clipboard.writeText("");
         }
       } catch {
-        // Clipboard may not be accessible
       }
     }, autoClearMs);
 
@@ -140,12 +136,9 @@ export async function secureCopyToClipboard(text: string, autoClearMs: number = 
 }
 
 export function secureWipeString(str: string): void {
-  // Overwrite the string in memory to prevent forensic recovery
   if (str) {
     const arr = new Uint8Array(str.length);
     window.crypto.getRandomValues(arr);
-    // Note: This is a best-effort attempt. Modern JS engines may optimize this away.
-    // For true security, consider using secure memory management libraries.
   }
 }
 
@@ -208,16 +201,13 @@ export function sanitizeInput(input: string, maxLength: number = 1000): string {
     throw new Error('Input must be a string');
   }
 
-  // Remove null bytes and other control characters
   let sanitized = input.split('').filter(char => {
     const code = char.charCodeAt(0);
     return code >= 32 && (code < 127 || code > 159);
   }).join('');
 
-  // Trim whitespace
   sanitized = sanitized.trim();
 
-  // Limit length
   if (sanitized.length > maxLength) {
     sanitized = sanitized.substring(0, maxLength);
   }
@@ -226,7 +216,6 @@ export function sanitizeInput(input: string, maxLength: number = 1000): string {
 }
 
 export function validateSite(site: string): boolean {
-  // Basic URL validation (allow localhost, IPs, domains)
   const siteRegex = /^[a-zA-Z0-9][a-zA-Z0-9\-_.]*(?:\.[a-zA-Z]{2,})?$|^localhost$|^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
   return siteRegex.test(site) && site.length <= 253;
 }
@@ -259,12 +248,10 @@ export class AuditLogger {
 
     this.logs.push(auditEntry);
 
-    // Keep only the most recent logs
     if (this.logs.length > this.maxLogs) {
       this.logs = this.logs.slice(-this.maxLogs);
     }
 
-    // In a real implementation, this would send to a secure logging service
   }
 
   getLogs(): AuditEntry[] {

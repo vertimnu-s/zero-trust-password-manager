@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// ── Mock AWS SDK ────────────────────────────────────────────────────────────
-
 const mockDynamoSend = vi.fn()
 const mockS3Send = vi.fn()
 
@@ -18,8 +16,6 @@ const { handler } = await import(
   '../../terraform/lambda-functions/read-passwords/index.js'
 )
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-
 function makeEvent(overrides = {}) {
   return {
     requestContext: {
@@ -28,8 +24,6 @@ function makeEvent(overrides = {}) {
     ...overrides,
   }
 }
-
-// ── Tests ───────────────────────────────────────────────────────────────────
 
 describe('read-passwords Lambda', () => {
   beforeEach(() => {
@@ -83,12 +77,9 @@ describe('read-passwords Lambda', () => {
   })
 
   it('cannot read another user\'s data (userId is from JWT, not request)', async () => {
-    // The handler gets userId from JWT claims, not from query/body.
-    // An attacker cannot override it.
     const event = makeEvent()
     await handler(event)
     const queryCmd = mockDynamoSend.mock.calls[0][0]
-    // Even if an attacker passed a different userId, the handler ignores it
     expect(queryCmd.ExpressionAttributeValues[':uid'].S).toBe('user-123')
   })
 

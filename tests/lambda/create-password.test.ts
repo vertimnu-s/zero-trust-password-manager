@@ -1,7 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
-// ── Mock AWS SDK ────────────────────────────────────────────────────────────
-
 const mockDynamoSend = vi.fn()
 const mockS3Send = vi.fn()
 
@@ -14,13 +12,9 @@ vi.mock('@aws-sdk/client-s3', () => ({
   PutObjectCommand: class { constructor(p: Record<string, unknown>) { Object.assign(this, p) } },
 }))
 
-// ── Import handler (after mocks are hoisted) ────────────────────────────────
-
 const { handler } = await import(
   '../../terraform/lambda-functions/create-password/index.js'
 )
-
-// ── Helpers ─────────────────────────────────────────────────────────────────
 
 function makeEvent(overrides = {}) {
   return {
@@ -38,8 +32,6 @@ function makeEvent(overrides = {}) {
     ...overrides,
   }
 }
-
-// ── Tests ───────────────────────────────────────────────────────────────────
 
 describe('create-password Lambda', () => {
   beforeEach(() => {

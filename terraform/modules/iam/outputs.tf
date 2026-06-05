@@ -1,5 +1,3 @@
-# IAM Module Outputs - Role ARNs for Lambda functions
-
 output "create_password_role_arn" {
   description = "ARN of IAM role for create password Lambda"
   value       = aws_iam_role.create_password_role.arn
@@ -29,5 +27,3 @@ output "all_lambda_role_names" {
     delete = aws_iam_role.delete_password_role.name
   }
 }
-
-

@@ -1,5 +1,3 @@
-# DynamoDB Module Outputs
-
 output "table_name" {
   description = "DynamoDB table name for Lambda environment variables"
   value       = aws_dynamodb_table.password_vault.name

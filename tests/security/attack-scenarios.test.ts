@@ -1,16 +1,3 @@
-/**
- * Security Attack Scenario Tests
- *
- * These tests verify that the zero-trust security controls enforce:
- *   1. Authentication gatekeeping (no anonymous access)
- *   2. Input validation / injection resistance
- *   3. Cryptographic integrity (AAD binding, tamper detection)
- *   4. Client-side brute-force deterrents
- *   5. k-Anonymity in breach checking
- *
- * Run locally — no AWS costs.
- */
-
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import {
   encryptPassword,
@@ -20,10 +7,6 @@ import {
   validateUsername,
   validateMasterPassword,
 } from '../../src/services/crypto'
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENARIO 1 — Unauthenticated Access Attempt
-// ═══════════════════════════════════════════════════════════════════════════
 
 const { mockDynamoSend, mockS3Send } = vi.hoisted(() => ({
   mockDynamoSend: vi.fn(),
@@ -79,10 +62,6 @@ describe('ATTACK: Unauthenticated API access', () => {
   })
 })
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENARIO 2 — SQL / NoSQL Injection via Input Fields
-// ═══════════════════════════════════════════════════════════════════════════
-
 describe('ATTACK: Injection payloads in input fields', () => {
   const injectionPayloads = [
     "'; DROP TABLE passwords; --",
@@ -98,7 +77,6 @@ describe('ATTACK: Injection payloads in input fields', () => {
     'sanitizeInput neutralises: %s',
     (payload) => {
       const sanitized = sanitizeInput(payload)
-      // Must not contain null bytes or control characters
       expect(sanitized).not.toMatch(/[\x00-\x1f]/)
     },
   )
@@ -117,10 +95,6 @@ describe('ATTACK: Injection payloads in input fields', () => {
     },
   )
 })
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENARIO 3 — Ciphertext Tampering (AES-GCM Integrity Check)
-// ═══════════════════════════════════════════════════════════════════════════
 
 describe('ATTACK: Ciphertext tampering', () => {
   const master = 'V3ry$ecure!Master'
@@ -148,7 +122,6 @@ describe('ATTACK: Ciphertext tampering', () => {
   })
 
   it('detects context switching attack (AAD mismatch)', async () => {
-    // Encrypt for bank.com, try to decrypt with evil.com
     const enc = await encryptPassword('password', master, 'bank.com')
     await expect(
       decryptPassword(enc.cipherText, enc.iv, enc.salt, master, 'evil.com'),
@@ -162,10 +135,6 @@ describe('ATTACK: Ciphertext tampering', () => {
     ).rejects.toThrow()
   })
 })
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENARIO 4 — Weak / Common Password Attacks
-// ═══════════════════════════════════════════════════════════════════════════
 
 describe('ATTACK: Weak and common passwords', () => {
   const weakPasswords = [
@@ -193,10 +162,6 @@ describe('ATTACK: Weak and common passwords', () => {
   })
 })
 
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENARIO 5 — k-Anonymity Verification (HIBP)
-// ═══════════════════════════════════════════════════════════════════════════
-
 describe('ATTACK: Breach-checking leaks password to third party', () => {
   it('only the first 5 hex chars of SHA-1 are sent (k-anonymity)', async () => {
     const capturedUrls: string[] = []
@@ -209,16 +174,10 @@ describe('ATTACK: Breach-checking leaks password to third party', () => {
     await checkPasswordBreach('MySuperSecretPassword123!')
 
     expect(capturedUrls).toHaveLength(1)
-    // URL ends with exactly 5 uppercase hex characters
     expect(capturedUrls[0]).toMatch(/\/range\/[0-9A-F]{5}$/)
-    // Full hash is never sent
     expect(capturedUrls[0].length).toBeLessThan(60)
   })
 })
-
-// ═══════════════════════════════════════════════════════════════════════════
-// SCENARIO 6 — Boundary & Overflow Attacks
-// ═══════════════════════════════════════════════════════════════════════════
 
 describe('ATTACK: Boundary and overflow inputs', () => {
   it('sanitizeInput truncates excessively long input', () => {

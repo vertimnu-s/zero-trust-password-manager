@@ -1,13 +1,3 @@
-/**
- * Password validation to match Cognito password policy
- * Requirements:
- * - Minimum 12 characters
- * - At least one uppercase letter
- * - At least one lowercase letter
- * - At least one number
- * - At least one special character/symbol
- */
-
 export interface PasswordValidation {
   isValid: boolean;
   errors: string[];

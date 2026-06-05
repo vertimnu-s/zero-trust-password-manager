@@ -82,7 +82,6 @@ async function disableCompromisedUser(principalId) {
   }
 
   try {
-    // principalId may be a Cognito sub — look up by sub attribute
     const users = await cognito.send(
       new ListUsersCommand({
         UserPoolId: COGNITO_USER_POOL_ID,
@@ -126,26 +125,21 @@ export const handler = async (event) => {
 
   const actions = [];
 
-  // Extract remote IP from the finding if present
   const remoteIp =
     detail.service?.action?.networkConnectionAction?.remoteIpDetails?.ipAddressV4 ||
     detail.service?.action?.awsApiCallAction?.remoteIpDetails?.ipAddressV4 ||
     detail.service?.action?.portProbeAction?.portProbeDetails?.[0]?.remoteIpDetails?.ipAddressV4;
 
-  // Extract principal/user info
   const principalId =
     detail.resource?.accessKeyDetails?.principalId ||
     detail.resource?.instanceDetails?.iamInstanceProfile?.id;
 
-  // HIGH severity (>=7): block IP + disable user if applicable
-  // MEDIUM severity (>=4): block IP only
   if (severity >= 4 && remoteIp) {
     const blocked = await blockIP(remoteIp);
     actions.push(`IP block ${remoteIp}: ${blocked ? "success" : "failed"}`);
   }
 
   if (severity >= 7) {
-    // Credential-based findings — disable the compromised principal
     const credentialFindings = [
       "UnauthorizedAccess",
       "CredentialAccess",
@@ -161,7 +155,6 @@ export const handler = async (event) => {
       actions.push(`User disable ${principalId}: ${disabled ? "success" : "failed"}`);
     }
 
-    // Always notify for HIGH severity even if no automated action was taken
     if (actions.length === 0) {
       await notifyAdmin(
         `[Alert] HIGH Severity Finding: ${title}`,

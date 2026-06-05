@@ -67,7 +67,6 @@ export const fetchPasswords = async () => {
     });
 
     if (response.status === 404) {
-      // No saved passwords yet
       return [];
     }
 
@@ -125,8 +124,6 @@ export const deletePassword = async (site: string, username: string) => {
 
   return handleResponse(response);
 };
-
-
 
 function handleUnauthorized() {
   localStorage.removeItem("idToken");

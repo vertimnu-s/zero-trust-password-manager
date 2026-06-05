@@ -1,17 +1,12 @@
-# S3 Module - Audit Logs and Backup Storage
-
-# Generate a unique bucket name (S3 bucket names must be globally unique)
 locals {
   bucket_name = "${var.project_name}-audit-logs-${data.aws_caller_identity.current.account_id}-${var.environment}"
 }
 
 data "aws_caller_identity" "current" {}
 
-# S3 Bucket for audit logs
 resource "aws_s3_bucket" "audit_logs" {
   bucket = local.bucket_name
 
-  # Prevent accidental deletion
   lifecycle {
     prevent_destroy = true
   }
@@ -23,7 +18,6 @@ resource "aws_s3_bucket" "audit_logs" {
   }
 }
 
-# Enable versioning for version history
 resource "aws_s3_bucket_versioning" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
@@ -32,7 +26,6 @@ resource "aws_s3_bucket_versioning" "audit_logs" {
   }
 }
 
-# Block public access (CRITICAL - audit logs should NEVER be public)
 resource "aws_s3_bucket_public_access_block" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
@@ -54,7 +47,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
   }
 }
 
-# LIFECYCLE POLICY - Manage cost by archiving old logs
 resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
@@ -86,7 +78,6 @@ resource "aws_s3_bucket_lifecycle_configuration" "audit_logs" {
   }
 }
 
-# Enable logging for the bucket itself (meta-log)
 resource "aws_s3_bucket_logging" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
@@ -94,7 +85,6 @@ resource "aws_s3_bucket_logging" "audit_logs" {
   target_prefix = "bucket-access-logs/"
 }
 
-# Merged bucket policy: CloudWatch Logs + Lambda audit writes
 resource "aws_s3_bucket_policy" "audit_logs" {
   bucket = aws_s3_bucket.audit_logs.id
 
@@ -151,11 +141,3 @@ resource "aws_s3_bucket_policy" "audit_logs" {
     ]
   })
 }
-
-# Optional: Enable replication for disaster recovery (advanced)
-# Uncomment if you want backup to another region
-# resource "aws_s3_bucket_replication_configuration" "audit_logs" {
-#   bucket = aws_s3_bucket.audit_logs.id
-#   role   = aws_iam_role.s3_replication_role.arn
-#   ...
-# }

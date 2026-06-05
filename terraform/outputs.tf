@@ -1,5 +1,3 @@
-# Root Module Outputs - These are exported values that you can reference
-
 output "cognito_user_pool_id" {
   description = "Cognito User Pool ID - needed for frontend environment variable VITE_COGNITO_USER_POOL_ID"
   value       = module.cognito.user_pool_id
@@ -66,7 +64,6 @@ output "cloudwatch_log_groups" {
   sensitive   = false
 }
 
-# Frontend Environment Variables Summary
 output "frontend_env_variables" {
   description = "Environment variables needed for the frontend .env file"
   value = {
@@ -77,7 +74,6 @@ output "frontend_env_variables" {
   sensitive = false
 }
 
-# WAF & CloudFront outputs
 output "waf_web_acl_name" {
   description = "WAF Web ACL name protecting the API"
   value       = module.waf.web_acl_name
@@ -106,7 +102,6 @@ output "waf_protected_frontend_env" {
   sensitive = false
 }
 
-# Security monitoring outputs
 output "guardduty_detector_id" {
   value     = module.security_monitoring.guardduty_detector_id
   sensitive = false

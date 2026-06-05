@@ -1,15 +1,4 @@
 // @vitest-environment node
-
-/**
- * Incident Response Lambda — Decision Logic Tests
- *
- * The handler has its own node_modules with the real AWS SDK, so we cannot
- * mock SDK calls from the test process. Instead we verify the handler's
- * DECISION LOGIC by examining its return value. AWS calls fail gracefully
- * in local testing (no credentials), but the handler still returns which
- * actions were ATTEMPTED — proving the severity-based routing is correct.
- */
-
 import { describe, it, expect, beforeAll } from 'vitest'
 
 let handler: (event: unknown) => Promise<Record<string, unknown>>

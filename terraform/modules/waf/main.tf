@@ -1,6 +1,3 @@
-# WAF + CloudFront — sits in front of API Gateway since WAF
-# cannot attach directly to HTTP APIs, only REST/CloudFront/ALB.
-
 terraform {
   required_providers {
     aws = {
@@ -20,7 +17,6 @@ resource "aws_wafv2_web_acl" "api_protection" {
     allow {}
   }
 
-  # Core Rule Set — XSS, path traversal, file inclusion, generic injections
   rule {
     name     = "aws-managed-common-rules"
     priority = 1
@@ -34,7 +30,6 @@ resource "aws_wafv2_web_acl" "api_protection" {
         name        = "AWSManagedRulesCommonRuleSet"
         vendor_name = "AWS"
 
-        # Encrypted payloads can exceed the default 8KB body size limit
         rule_action_override {
           action_to_use {
             count {}
@@ -51,7 +46,6 @@ resource "aws_wafv2_web_acl" "api_protection" {
     }
   }
 
-  # Known Bad Inputs — Log4Shell, Java deserialization, host header attacks
   rule {
     name     = "aws-managed-known-bad-inputs"
     priority = 2
@@ -74,7 +68,6 @@ resource "aws_wafv2_web_acl" "api_protection" {
     }
   }
 
-  # SQL Injection — catches injection patterns in params, body, headers
   rule {
     name     = "aws-managed-sql-injection"
     priority = 3
@@ -97,7 +90,6 @@ resource "aws_wafv2_web_acl" "api_protection" {
     }
   }
 
-  # IP Reputation — blocks known botnets, C&C servers, threat campaign IPs
   rule {
     name     = "aws-managed-ip-reputation"
     priority = 4
@@ -120,7 +112,6 @@ resource "aws_wafv2_web_acl" "api_protection" {
     }
   }
 
-  # Incident response IP blocklist — highest priority, blocks IPs added by automated remediation
   dynamic "rule" {
     for_each = var.blocked_ip_set_arn != null ? [1] : []
     content {
@@ -150,7 +141,6 @@ resource "aws_wafv2_web_acl" "api_protection" {
     }
   }
 
-  # Per-IP rate limiting — blocks IPs exceeding threshold in a 5-min window
   rule {
     name     = "rate-limit-per-ip"
     priority = 5
@@ -307,8 +297,6 @@ resource "aws_cloudfront_distribution" "api_distribution" {
   }
 }
 
-# WAF logging — only blocked/counted requests are logged to save costs.
-# Log group name must start with "aws-waf-logs-" per AWS requirements.
 resource "aws_cloudwatch_log_group" "waf_logs" {
   count = var.enabled && var.enable_logging ? 1 : 0
 
@@ -348,7 +336,6 @@ resource "aws_wafv2_web_acl_logging_configuration" "waf_logging" {
   }
 }
 
-# Alarms — high block volume and rate limiting triggers
 resource "aws_cloudwatch_metric_alarm" "waf_blocked_requests" {
   count = var.enabled ? 1 : 0
 

@@ -1,19 +1,14 @@
-# DynamoDB Module - PasswordVault Table
-
 resource "aws_dynamodb_table" "password_vault" {
   name           = "${var.project_name}-${var.environment}"
   billing_mode   = var.billing_mode
   hash_key       = "userId"          # Partition key
   range_key      = "itemKey"         # Sort key
 
-  # PARTITION KEY - Amazon Cognito sub claim (unique user ID)
   attribute {
     name = "userId"
     type = "S"  # String
   }
 
-  # SORT KEY - Composite of site#username (e.g., "github.com#john@example.com")
-  # This allows fast queries per user and prevents duplicate entries
   attribute {
     name = "itemKey"
     type = "S"  # String
@@ -24,39 +19,25 @@ resource "aws_dynamodb_table" "password_vault" {
     kms_key_arn = var.kms_key_arn
   }
 
-  # POINT-IN-TIME RECOVERY - Critical for a password manager!
-  # Allows restore to any point in time for last 35 days
   point_in_time_recovery {
     enabled = var.point_in_time_recovery
   }
 
-  # STREAMS - Capture item-level modifications (optional enhancement)
   stream_enabled   = true
   stream_view_type = "NEW_AND_OLD_IMAGES"
 
-  # TAGS
   tags = {
     Name              = "${var.project_name}-password-vault"
     DataClassification = "Sensitive"
     BackupRequired     = "true"
   }
 
-  # LIFECYCLE - Prevent accidental deletion during development
   lifecycle {
     prevent_destroy = true  # You must explicitly remove this to delete the table
   }
 }
 
-# Optional: Enable TTL for auto-deletion of old password records (if needed)
-# Uncomment if you want to automatically delete records after a certain age
-# resource "aws_dynamodb_ttl" "password_vault_ttl" {
-#   name           = "expirationTime"
-#   attribute_name = "ttl"
-#   enabled        = true
-#   table_name     = aws_dynamodb_table.password_vault.name
-# }
 
-# Optional: CloudWatch alarms for monitoring
 resource "aws_cloudwatch_metric_alarm" "dynamodb_read_throttle" {
   alarm_name          = "${var.project_name}-dynamodb-read-throttle"
   comparison_operator = "GreaterThanOrEqualToThreshold"

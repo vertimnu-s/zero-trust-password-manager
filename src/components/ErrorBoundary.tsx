@@ -21,7 +21,6 @@ class ErrorBoundary extends Component<Props, State> {
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   componentDidCatch(_error: Error, _info: ErrorInfo) {
-    // Errors are intentionally not logged to console
   }
 
   render() {
